@@ -1,0 +1,636 @@
+---
+import Base from '../layouts/Base.astro'
+import Arm from '../components/Arm.astro'
+import Estimate from '../components/Estimate.astro'
+import { loadTask } from '../lib/tasks'
+import { getServer } from '@codemode-lab/mcp-client'
+import { generateSurface, schemaSurfaceBytes } from '@codemode-lab/typegen'
+import { formatBytes } from '@codemode-lab/meter'
+import { formatBand, formatWindowBand, formatInt, tokenBand, WINDOW_TOKENS } from '../lib/tokens'
+import {
+  PAYLOADS,
+  PAYLOAD_TOTAL_TEXT,
+  PAYLOAD_TOTAL_WIRE,
+  DEFINITIONS,
+  DEFINITION_TOTAL,
+  DEFINITION_TOOLS,
+  FAILURE_CLASSES,
+} from '../data/measured'
+import deepwikiCapture from '../data/deepwiki-tools.json'
+import context7Capture from '../data/context7-tools.json'
+import mslearnCapture from '../data/mslearn-tools.json'
+
+interface Capture {
+  serverId: string
+  label: string
+  capturedAt: string
+  toolsListBytes: number
+  tools: Parameters<typeof generateSurface>[1]
+}
+
+const captures = [deepwikiCapture, context7Capture, mslearnCapture] as unknown as Capture[]
+
+/** Generate the typed surface at build time with the same package the CLI uses. */
+const surfaces = captures.map((capture) => {
+  const generated = generateSurface(capture.serverId, capture.tools)
+  const rawBytes = schemaSurfaceBytes(capture.tools)
+  return {
+    id: capture.serverId,
+    label: capture.label,
+    capturedAt: capture.capturedAt,
+    url: getServer(capture.serverId).url,
+    toolCount: capture.tools.length,
+    rawBytes,
+    rawJson: JSON.stringify({ tools: capture.tools }, null, 2),
+    surfaceBytes: generated.bytes,
+    surfaceSource: generated.source,
+    delta: Math.round(((generated.bytes - rawBytes) / rawBytes) * 100),
+    warnings: generated.warnings,
+  }
+})
+
+const surfaceById = Object.fromEntries(surfaces.map((s) => [s.id, s]))
+
+/** The surface panel compares two numbers directly, so it shows them exactly. */
+const formatExact = (bytes: number) => `${formatInt(bytes)} B`
+
+const cross = loadTask('cross-repo-scan')
+const single = loadTask('single-call')
+const pair = loadTask('sequential-pair')
+
+/**
+ * The direct arm reads its repositories out of the program, so the two arms always
+ * ask about the same repositories. If the program is edited the page follows it,
+ * and if it stops naming any the build fails rather than shipping an empty arm.
+ */
+const repos = [...cross.program.matchAll(/'([\w.-]+\/[\w.-]+)'/g)].map((m) => m[1])
+if (repos.length === 0) {
+  throw new Error('found no owner/repo strings in tasks/cross-repo-scan/program.js')
+}
+
+interface StepSpec {
+  serverId: string
+  tool: string
+  args: Record<string, unknown>
+  label: string
+  argsFrom?: string
+}
+
+function buildTask(
+  task: ReturnType<typeof loadTask>,
+  direct: StepSpec[],
+  extra: { caveat?: string } = {},
+) {
+  const serverIds = Object.keys(task.servers)
+  return {
+    id: task.id,
+    title: task.title,
+    question: task.question,
+    why: task.why,
+    expectCodeModeWins: task.expectCodeModeWins,
+    // The task file budgets for Node, where four warm payloads land in about ten
+    // seconds. A browser on a cold DeepWiki repository has been measured at over
+    // two minutes for the same work, so the page waits longer before it gives up.
+    timeoutMs: Math.max(task.timeoutMs, 300_000),
+    program: task.program,
+    programBytes: task.programBytes,
+    direct,
+    urls: Object.fromEntries(serverIds.map((id) => [id, getServer(id).url])),
+    allow: task.servers,
+    definitionBytes: serverIds.reduce((n, id) => n + surfaceById[id].rawBytes, 0),
+    surfaceBytes: serverIds.reduce((n, id) => n + surfaceById[id].surfaceBytes, 0),
+    ...extra,
+  }
+}
+
+const tasks = {
+  'cross-repo-scan': buildTask(
+    cross,
+    repos.map((repo) => ({
+      serverId: 'deepwiki',
+      tool: 'read_wiki_contents',
+      args: { repoName: repo },
+      label: repo,
+    })),
+  ),
+  'single-call': buildTask(single, [
+    {
+      serverId: 'deepwiki',
+      tool: 'read_wiki_structure',
+      args: { repoName: 'withastro/astro' },
+      label: 'withastro/astro',
+    },
+  ], {
+    caveat:
+      'Code mode returns the same text through one more hop. The typed surface and the program are extra tokens that bought nothing. Direct tool calling is the right choice here.',
+  }),
+  'sequential-pair': buildTask(
+    pair,
+    [
+      {
+        serverId: 'context7',
+        tool: 'resolve-library-id',
+        args: { query: 'next.js app router', libraryName: 'next.js' },
+        label: 'resolve-library-id: next.js',
+      },
+      {
+        serverId: 'context7',
+        tool: 'query-docs',
+        args: {},
+        argsFrom: 'context7-library-id',
+        label: 'query-docs: the resolved id',
+      },
+    ],
+    {
+      caveat:
+        'Read the byte counts with care. Code mode comes out slightly smaller for one reason: the intermediate library id stayed inside the sandbox. The program returns the whole document, because the question asked for the document. Dropping one small intermediate result does not pay for a round trip and a program the model had to write first.',
+    },
+  ),
+}
+
+const labConfig = {
+  tasks,
+  surfaces: Object.fromEntries(
+    surfaces.map((s) => [
+      s.id,
+      { label: s.label, toolsListBytes: s.rawBytes, surfaceBytes: s.surfaceBytes, url: s.url },
+    ]),
+  ),
+}
+
+// A JSON island, with the one sequence that could end the script tag neutralised.
+const labConfigJson = JSON.stringify(labConfig).replace(/</g, '\\u003c')
+
+const firstPayload = PAYLOADS.find((p) => p.repo === 'cloudflare/agents')!
+const totalWindows = {
+  low: tokenBand(PAYLOAD_TOTAL_TEXT).low / WINDOW_TOKENS,
+  high: tokenBand(PAYLOAD_TOTAL_TEXT).high / WINDOW_TOKENS,
+}
+
+const losers = [
+  { key: 'single-call', task: single, spec: tasks['single-call'] },
+  { key: 'sequential-pair', task: pair, spec: tasks['sequential-pair'] },
+]
+
+const title = 'codemode-lab: the payload tax, measured live'
+const description =
+  'Two arms race against live MCP servers in your browser. One drowns in a single payload. The other keeps it inside a sandbox. Bytes counted, tokens estimated as a band.'
+---
+
+<Base title={title} description={description}>
+  <!-- ------------------------------------------------------------------ hero -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">measured 21 September 2026 · live public MCP servers · no model runs</p>
+      <h1>The tool definitions are small. The <em>payload</em> is the whole window.</h1>
+
+      <ol class="claims">
+        <li>
+          Three public MCP servers expose {DEFINITION_TOOLS} tools. Their definitions cost {
+            formatBytes(DEFINITION_TOTAL)
+          }, about {formatBand(DEFINITION_TOTAL)} <Estimate />. That is the number the blog posts
+          measure, and it is small.
+        </li>
+        <li>
+          One call to one of those tools returned {formatBytes(firstPayload.textBytes)} of text,
+          roughly {formatBand(firstPayload.textBytes)} <Estimate />, which is {
+            formatWindowBand(firstPayload.textBytes)
+          } of a 200K context window.
+        </li>
+        <li>Press Run and watch which arm survives.</li>
+      </ol>
+
+      <div class="run-row">
+        <button class="btn" type="button" data-run="cross-repo-scan">Run both arms</button>
+        <p class="run-note">
+          Both arms call the live DeepWiki server from your own browser. No model runs. No API key.
+          Nothing costs anybody money. A warm run takes about 10 seconds. A repository DeepWiki has
+          to build first can take two minutes or more.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ race -->
+  <section id="race" data-task="cross-repo-scan">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow" style="margin:0">task: cross-repo-scan</p>
+        <h2>{cross.title}</h2>
+      </div>
+      <p class="lede">{cross.question}</p>
+
+      <div class="arms" style="margin-top:1.5rem">
+        <Arm
+          kind="direct"
+          title="Arm A: direct tool calling"
+          note="Every result lands in the context window. Four calls, one after another."
+        />
+        <Arm
+          kind="code"
+          title="Arm B: code mode"
+          note="The real program from tasks/cross-repo-scan/program.js runs in a sandbox. Only its return value comes out."
+          sandbox={true}
+        />
+      </div>
+
+      <div data-role="verdict" style="margin-top:1.25rem"></div>
+
+      <div class="grid-2" style="margin-top:1.5rem">
+        <div class="panel">
+          <h3>What Arm A does</h3>
+          <p>
+            It calls <code>deepwiki.read_wiki_contents</code> once per repository. Each answer is text
+            that a model would have to read. The bar counts the tool definitions plus every byte of
+            text received. When the window cannot hold what has already arrived, the arm stops and
+            says so. It does not pretend to continue.
+          </p>
+        </div>
+        <div class="panel">
+          <h3>What Arm B does</h3>
+          <p>
+            It runs the program below inside an iframe with an opaque origin and a content policy of
+            <code>default-src 'none'</code>. The program cannot reach the network at all. Every tool
+            call travels out over a message bridge, and the payload travels back into the sandbox.
+            The model sees the typed surface, the program, and the returned value.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top:1.25rem">
+        <div class="code-head">
+          <b>tasks/cross-repo-scan/program.js</b>
+          <span>{formatBytes(cross.programBytes)} · runs unchanged, in the sandbox</span>
+        </div>
+        <pre class="code">{cross.program}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- honesty -->
+  <section id="honesty">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>What this page does not show</h2>
+      </div>
+      <div class="grid-2">
+        <div class="panel loud">
+          <h3>No model runs here</h3>
+          <p>
+            Nothing on this page sends anything to a model. The page measures <strong>volume</strong>:
+            bytes that would enter a context window if a model were reading them. It does not measure
+            answer quality, and it does not measure money.
+          </p>
+          <p>
+            A smaller payload is not a better answer. In one of the tasks below, code mode returns
+            slightly fewer bytes only because one intermediate result stayed inside the sandbox. A
+            program that truncated its answer would post a much better ratio and be worth less.
+          </p>
+        </div>
+        <div class="panel">
+          <h3>Bytes are counted. Tokens are estimated.</h3>
+          <ul>
+            <li>
+              Every byte figure on this page was counted, either by this browser or with curl against
+              the live server.
+            </li>
+            <li>
+              Every token figure is derived from those bytes at 3.3 to 3.8 bytes per token, and is
+              shown as a band with an <Estimate /> marker. No tokenizer runs here. Billed token counts
+              come from the Anthropic API in CI, not from this page.
+            </li>
+            <li>
+              <strong>Wire bytes are not context bytes.</strong> A response carries SSE framing and
+              JSON escaping, so the wire count is about twice the text count. Context figures on this
+              page always use text bytes. While a payload is still arriving only the wire count
+              exists, so the bar divides it by two and draws that part hatched until the exact count
+              arrives.
+            </li>
+            <li>
+              Code mode is not free. It adds a round trip, the program itself costs tokens, and a
+              program that is subtly wrong can return a confident answer.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------------- loses -->
+  <section id="loses">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Where code mode loses</h2>
+      </div>
+      <p class="lede">
+        Two of the three tasks in this repo exist to show code mode losing. Run them. The arms are
+        the same code as the race above.
+      </p>
+
+      <div class="panel loud" style="margin-block:1.25rem">
+        <p>
+          Anthropic measured programmatic tool calling on tau-squared-bench and reported
+          <strong>scores unchanged and about 8 percent more cost</strong>. Code mode is a tool for one
+          shape of problem: many calls, large results, work that can be filtered before it returns.
+          <a
+            href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling"
+            rel="noreferrer">Read their write-up</a
+          >.
+        </p>
+      </div>
+
+      <div data-tabs>
+        <div class="tabs" role="tablist" aria-label="Tasks where code mode loses">
+          {
+            losers.map((entry, index) => (
+              <button
+                class="tab"
+                type="button"
+                role="tab"
+                id={`tab-${entry.key}`}
+                aria-controls={`panel-${entry.key}`}
+                aria-selected={index === 0 ? 'true' : 'false'}
+              >
+                {entry.key}
+              </button>
+            ))
+          }
+        </div>
+
+        {
+          losers.map((entry, index) => (
+            <div
+              id={`panel-${entry.key}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${entry.key}`}
+              hidden={index !== 0}
+              data-task={entry.key}
+            >
+              <div class="section-head">
+                <h3 style="font-size:1.25rem">{entry.task.title}</h3>
+              </div>
+              <p class="lede">{entry.task.question}</p>
+              <p class="lede" style="margin-top:0.5rem">
+                <strong>Why it is here.</strong> {entry.task.why}
+              </p>
+
+              <div class="run-row">
+                <button class="btn ghost small" type="button" data-run={entry.key}>
+                  Run this task
+                </button>
+                <p class="run-note">
+                  {Object.keys(entry.spec.allow).join(', ')} · {entry.spec.direct.length} direct call
+                  {entry.spec.direct.length === 1 ? '' : 's'}
+                </p>
+              </div>
+
+              <div class="arms" style="margin-top:1.25rem">
+                <Arm
+                  kind="direct"
+                  title="Arm A: direct tool calling"
+                  note="The plain sequence of tool calls a model would make."
+                />
+                <Arm
+                  kind="code"
+                  title="Arm B: code mode"
+                  note={`The real program from tasks/${entry.key}/program.js, in the same sandbox.`}
+                />
+              </div>
+
+              <div data-role="verdict" style="margin-top:1.25rem" />
+
+              <div style="margin-top:1.25rem">
+                <div class="code-head">
+                  <b>tasks/{entry.key}/program.js</b>
+                  <span>{formatBytes(entry.task.programBytes)}</span>
+                </div>
+                <pre class="code">{entry.task.program}</pre>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- surface -->
+  <section id="surface">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>What the model reads in each mode</h2>
+      </div>
+      <p class="lede">
+        Direct tool calling hands the model raw JSON Schema. Code mode hands it a typed surface and
+        asks for a program. Both are generated from the same live <code>tools/list</code>. The
+        difference is smaller than the payload difference by three orders of magnitude, which is the
+        point of this whole page.
+      </p>
+
+      <div data-tabs style="margin-top:1.5rem">
+        <div class="tabs" role="tablist" aria-label="Servers">
+          {
+            surfaces.map((server, index) => (
+              <button
+                class="tab"
+                type="button"
+                role="tab"
+                id={`tab-surface-${server.id}`}
+                aria-controls={`panel-surface-${server.id}`}
+                aria-selected={index === 0 ? 'true' : 'false'}
+              >
+                {server.label}
+              </button>
+            ))
+          }
+        </div>
+
+        {
+          surfaces.map((server, index) => (
+            <div
+              id={`panel-surface-${server.id}`}
+              role="tabpanel"
+              aria-labelledby={`tab-surface-${server.id}`}
+              hidden={index !== 0}
+              data-surface={server.id}
+            >
+              <div class="run-row" style="margin-top:0">
+                <button
+                  class="btn ghost small"
+                  type="button"
+                  data-refresh-surface={server.id}
+                >
+                  Fetch tools/list again, live
+                </button>
+                <p class="run-note" data-role="surface-status">
+                  captured {server.capturedAt}, {server.toolCount} tools
+                </p>
+              </div>
+
+              <div class="grid-2" style="margin-top:1rem">
+                <div>
+                  <div class="code-head">
+                    <b>raw tools/list JSON</b>
+                    <span data-role="raw-bytes">{formatExact(server.rawBytes)}</span>
+                  </div>
+                  <pre class="code" data-role="raw-json">{server.rawJson}</pre>
+                </div>
+                <div>
+                  <div class="code-head">
+                    <b>typed surface from typegen</b>
+                    <span>
+                      <span data-role="surface-bytes">{formatExact(server.surfaceBytes)}</span>
+                      {' · '}
+                      <span data-role="surface-delta">{server.delta} percent</span>
+                    </span>
+                  </div>
+                  <pre class="code" data-role="surface-source">{server.surfaceSource}</pre>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- numbers -->
+  <section id="numbers">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>The two taxes, side by side</h2>
+      </div>
+
+      <h3 style="font-size:1.05rem;margin-bottom:0.6rem">
+        The tool definition tax, measured with curl
+      </h3>
+      <p class="lede" style="margin-bottom:0.8rem">
+        These are JSON bytes, which is what a model reads. The SSE response on the wire is 40 to 80
+        bytes larger per server, because of the event framing. The same rule applies here as
+        everywhere else on this page: context figures never use wire bytes.
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>server</th>
+              <th>tools</th>
+              <th>tools/list JSON</th>
+              <th>tokens <Estimate /></th>
+              <th>of a 200K window <Estimate /></th>
+              <th>note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              DEFINITIONS.map((row) => (
+                <tr>
+                  <td>{row.server}</td>
+                  <td class="num">{row.tools}</td>
+                  <td class="num">{formatBytes(row.bytes)}</td>
+                  <td class="num">{formatBand(row.bytes, '')}</td>
+                  <td class="num">{formatWindowBand(row.bytes)}</td>
+                  <td>{row.note}</td>
+                </tr>
+              ))
+            }
+            <tr>
+              <td><strong>all three</strong></td>
+              <td class="num">{DEFINITION_TOOLS}</td>
+              <td class="num">{formatBytes(DEFINITION_TOTAL)}</td>
+              <td class="num">{formatBand(DEFINITION_TOTAL, '')}</td>
+              <td class="num">{formatWindowBand(DEFINITION_TOTAL)}</td>
+              <td>this is the term everyone measures</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:1.05rem;margin:2rem 0 0.6rem">
+        The payload tax, one read_wiki_contents call per repository
+      </h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>repository</th>
+              <th>wire</th>
+              <th>text</th>
+              <th>tokens <Estimate /></th>
+              <th>of a 200K window <Estimate /></th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              PAYLOADS.map((row) => (
+                <tr>
+                  <td class="num">{row.repo}</td>
+                  <td class="num">{formatBytes(row.wireBytes)}</td>
+                  <td class="num">{formatBytes(row.textBytes)}</td>
+                  <td class="num">{formatBand(row.textBytes, '')}</td>
+                  <td class="num">{formatWindowBand(row.textBytes)}</td>
+                </tr>
+              ))
+            }
+            <tr>
+              <td><strong>all seven</strong></td>
+              <td class="num">{formatBytes(PAYLOAD_TOTAL_WIRE)}</td>
+              <td class="num">{formatBytes(PAYLOAD_TOTAL_TEXT)}</td>
+              <td class="num">{formatBand(PAYLOAD_TOTAL_TEXT, '')}</td>
+              <td class="num">
+                {totalWindows.low.toFixed(1)} to {totalWindows.high.toFixed(1)} windows
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel" style="margin-top:1.25rem">
+        <p>
+          The definitions of eight tools across three servers cost {formatBytes(DEFINITION_TOTAL)}.
+          One wiki payload costs {formatBytes(firstPayload.textBytes)}. That is {
+            Math.round(firstPayload.textBytes / DEFINITION_TOTAL)
+          } times more, from a single call. Trimming tool definitions is real work, and it moves a
+          term worth {formatWindowBand(DEFINITION_TOTAL)} of the window.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------------- failures -->
+  <section id="failures">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>When a run fails, it says which kind of failure</h2>
+      </div>
+      <p class="lede">
+        A demo that never fails is not credible. These runs hit the public internet, so they do fail.
+        The panels above name the class instead of printing a stack trace.
+      </p>
+      <div class="table-scroll" style="margin-top:1.25rem">
+        <table>
+          <thead>
+            <tr>
+              <th>class</th>
+              <th>what it means</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              FAILURE_CLASSES.map((row) => (
+                <tr>
+                  <td class="num">{row.label}</td>
+                  <td>{row.meaning}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/json" id="lab-config" set:html={labConfigJson} is:inline />
+  <script>
+    import '../client/lab'
+  </script>
+</Base>

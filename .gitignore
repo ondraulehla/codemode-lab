@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+site/dist/

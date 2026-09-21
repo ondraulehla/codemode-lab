@@ -1,0 +1,32 @@
+{
+  "name": "codemode-lab",
+  "version": "0.1.0",
+  "description": "Measure what an MCP server actually costs: not its tool definitions, its payloads. Plus a code mode runner that proves the difference.",
+  "type": "module",
+  "bin": {
+    "codemode-lab": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "code-mode",
+    "model-context-protocol",
+    "tokens",
+    "context-window",
+    "benchmark"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@codemode-lab/mcp-client": "0.1.0",
+    "@codemode-lab/meter": "0.1.0",
+    "@codemode-lab/runtime": "0.1.0",
+    "@codemode-lab/typegen": "0.1.0"
+  }
+}

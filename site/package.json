@@ -1,0 +1,20 @@
+{
+  "name": "@codemode-lab/site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@codemode-lab/mcp-client": "0.1.0",
+    "@codemode-lab/meter": "0.1.0",
+    "@codemode-lab/runtime": "0.1.0",
+    "@codemode-lab/typegen": "0.1.0"
+  },
+  "devDependencies": {
+    "astro": "^5.14.1"
+  }
+}

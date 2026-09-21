@@ -1,0 +1,15 @@
+{
+  "id": "sequential-pair",
+  "title": "Resolve a library, then read its docs",
+  "question": "Find the Context7 library id for Next.js, then fetch its documentation on the app router.",
+  "servers": {
+    "context7": ["resolve-library-id", "query-docs"]
+  },
+  "why": "Two calls where the second needs the first. This is the shape Anthropic measured on tau-squared-bench: scores unchanged, cost about 8 percent higher. Code mode buys nothing when there is nothing to loop over and nothing to filter. The program returns the whole document on purpose: truncating it would post a flattering ratio by throwing away the answer the task asked for.",
+  "expectCodeModeWins": false,
+  "timeoutMs": 60000,
+  "expect": {
+    "mustMention": ["server action"],
+    "note": "Deterministic substring grading. A model grading a model would put the thing under test inside the measurement. These strings were chosen from what the servers actually returned on 2026-09-21, so a server change makes the grade fail loudly rather than drift quietly."
+  }
+}

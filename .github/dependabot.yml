@@ -1,0 +1,30 @@
+version: 2
+
+# Monthly, not weekly. This repo has four devDependencies and pins its actions to a
+# commit SHA, so the useful signal is a handful of updates a month, not a stream of
+# pull requests that trains the reader to click merge without looking.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      # One pull request for the toolchain. TypeScript, Vitest and Prettier move
+      # together in practice, and reviewing them together is how a break is found.
+      toolchain:
+        patterns:
+          - 'typescript'
+          - 'vitest'
+          - 'prettier'
+          - '@types/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns:
+          - '*'

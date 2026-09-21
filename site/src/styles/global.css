@@ -1,0 +1,949 @@
+/* Editorial, high contrast, one accent. Warm paper and ink, because a page about
+   honest measurement should not look like a trading dashboard. */
+
+:root {
+  --paper: oklch(96.2% 0.018 86);
+  --panel: oklch(93.4% 0.024 84);
+  --sunk: oklch(90.2% 0.03 84);
+  --ink: oklch(19% 0.012 55);
+  --ink-muted: oklch(44% 0.016 58);
+  --ink-faint: oklch(58% 0.016 62);
+  --line: oklch(85% 0.028 82);
+  --accent: oklch(53% 0.2 33);
+  --accent-strong: oklch(45% 0.2 33);
+  --accent-soft: oklch(91% 0.05 45);
+  --ok: oklch(46% 0.12 155);
+  --ok-soft: oklch(92% 0.05 155);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --gutter: 1rem;
+  --rule: 1px solid var(--line);
+  color-scheme: light;
+}
+
+/* Dark by preference, unless the reader pinned light with the toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: oklch(16.5% 0.008 65);
+    --panel: oklch(20.5% 0.01 65);
+    --sunk: oklch(24% 0.012 65);
+    --ink: oklch(94% 0.012 80);
+    --ink-muted: oklch(72% 0.016 70);
+    --ink-faint: oklch(56% 0.016 65);
+    --line: oklch(30% 0.012 65);
+    --accent: oklch(71% 0.17 38);
+    --accent-strong: oklch(80% 0.14 45);
+    --accent-soft: oklch(28% 0.055 42);
+    --ok: oklch(74% 0.14 155);
+    --ok-soft: oklch(26% 0.05 155);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: oklch(16.5% 0.008 65);
+  --panel: oklch(20.5% 0.01 65);
+  --sunk: oklch(24% 0.012 65);
+  --ink: oklch(94% 0.012 80);
+  --ink-muted: oklch(72% 0.016 70);
+  --ink-faint: oklch(56% 0.016 65);
+  --line: oklch(30% 0.012 65);
+  --accent: oklch(71% 0.17 38);
+  --accent-strong: oklch(80% 0.14 45);
+  --accent-soft: oklch(28% 0.055 42);
+  --ok: oklch(74% 0.14 155);
+  --ok-soft: oklch(26% 0.05 155);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+code,
+kbd,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.wrap {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 1rem;
+  z-index: 10;
+}
+
+.skip:focus {
+  left: 0;
+}
+
+.masthead {
+  border-bottom: 2px solid var(--ink);
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 5;
+}
+
+.masthead-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.25rem;
+}
+
+.wordmark {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.wordmark span {
+  color: var(--accent);
+}
+
+.masthead nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.78rem;
+}
+
+.masthead nav a {
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.masthead nav a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .masthead nav a.optional {
+    display: none;
+  }
+}
+
+.theme-toggle {
+  border: var(--rule);
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+section {
+  border-bottom: var(--rule);
+  padding-block: clamp(2.25rem, 6vw, 4.25rem);
+  /* The masthead is sticky, so an anchor jump must stop below it. */
+  scroll-margin-top: 4rem;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.9rem;
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-head h2 {
+  font-size: clamp(1.55rem, 1.1rem + 2vw, 2.5rem);
+}
+
+.lede {
+  color: var(--ink-muted);
+  max-width: 62ch;
+  font-size: 1.02rem;
+}
+
+/* -------------------------------------------------------------------- hero */
+
+.hero {
+  padding-block: clamp(2.25rem, 7vw, 4.5rem);
+}
+
+.hero h1 {
+  font-size: clamp(2.2rem, 1.1rem + 6.2vw, 5rem);
+  max-width: 18ch;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.claims {
+  list-style: none;
+  counter-reset: claim;
+  margin: clamp(1.75rem, 4vw, 2.75rem) 0 0;
+  padding: 0;
+  border-top: 2px solid var(--ink);
+}
+
+.claims li {
+  counter-increment: claim;
+  border-bottom: var(--rule);
+  padding: 1rem 0 1rem 2.6rem;
+  position: relative;
+  max-width: 80ch;
+}
+
+.claims li::before {
+  content: counter(claim);
+  position: absolute;
+  left: 0;
+  top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+}
+
+.run-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn.ghost:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.btn.small {
+  font-size: 0.82rem;
+  padding: 0.45rem 0.9rem;
+  border-width: 1px;
+}
+
+.run-note {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  max-width: 46ch;
+}
+
+/* -------------------------------------------------------------------- arms */
+
+.arms {
+  display: grid;
+  gap: 1.25rem;
+  /* minmax(0, 1fr), never plain 1fr: a grid column sized by `auto` grows to the
+     widest item's minimum, and one long unbroken line of a payload would push the
+     whole arm past the viewport. */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+  .arms {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.arm {
+  border: var(--rule);
+  border-top: 3px solid var(--ink);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.arm[data-state='overflow'] {
+  border-top-color: var(--accent);
+}
+
+.arm[data-state='done'] {
+  border-top-color: var(--ok);
+}
+
+.arm-head {
+  padding: 0.9rem 1rem;
+  border-bottom: var(--rule);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.arm-head h3 {
+  font-size: 1.08rem;
+}
+
+.arm-head p {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  margin-top: 0.25rem;
+}
+
+.status {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--line);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.status[data-tone='running'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.status[data-tone='bad'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+.status[data-tone='good'] {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.arm-body {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------- context window bar */
+
+.window {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.4rem;
+}
+
+.window-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.window-track {
+  position: relative;
+  height: 2.4rem;
+  border: 1px solid var(--ink);
+  background: var(--sunk);
+  overflow: hidden;
+}
+
+.window-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--accent-soft);
+  border-right: 2px solid var(--accent);
+  transition: width 0.25s linear;
+}
+
+/* Hatched while a payload is still arriving: that width is provisional. */
+.window-fill.provisional {
+  background: repeating-linear-gradient(-45deg, var(--accent-soft) 0 6px, transparent 6px 12px);
+}
+
+.window-fill.small {
+  background: var(--ok-soft);
+  border-right-color: var(--ok);
+}
+
+.window-ticks {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  pointer-events: none;
+}
+
+.window-ticks span {
+  border-right: 1px dashed var(--line);
+}
+
+.window-ticks span:last-child {
+  border-right: 0;
+}
+
+.window-read {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-inline: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.window-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--ink-faint);
+}
+
+/* -------------------------------------------------------------- call ledger */
+
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.call {
+  border: var(--rule);
+  background: var(--paper);
+  padding: 0.5rem 0.6rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  min-width: 0;
+}
+
+.call-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.call-repo {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.call-bytes {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.call-bar {
+  height: 4px;
+  background: var(--sunk);
+  position: relative;
+  overflow: hidden;
+}
+
+.call-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+
+.call[data-state='pending'] {
+  opacity: 0.5;
+}
+
+.call[data-state='skipped'] {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.call[data-state='done'] .call-bar i {
+  background: var(--ok);
+}
+
+.call-note {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------- sandbox picture */
+
+.sandbox {
+  border: 2px dashed var(--ink);
+  background: var(--paper);
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.sandbox-caption {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+}
+
+.sandbox-caption b {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.pile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.25rem;
+  min-height: 4.6rem;
+  align-content: start;
+}
+
+.pile-empty {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  align-self: center;
+  font-family: var(--font-mono);
+}
+
+.slab {
+  height: 1.05rem;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  display: flex;
+  align-items: center;
+  padding-inline: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  /* The bar is the measurement, so it keeps its width. The label is allowed to
+     spill past a short bar rather than be cut in half. */
+  overflow: visible;
+  width: 2%;
+  transition: width 0.25s linear;
+}
+
+.crossing {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: var(--rule);
+  padding-top: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+
+.crossing .arrow {
+  color: var(--accent);
+  letter-spacing: -0.12em;
+  font-weight: 700;
+}
+
+.crossing .out {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- console */
+
+.console {
+  background: var(--sunk);
+  border: var(--rule);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  padding: 0.55rem 0.65rem;
+  max-height: 11rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.console:empty::before {
+  content: 'no output yet';
+  color: var(--ink-faint);
+}
+
+.console .warn,
+.console .error {
+  color: var(--accent);
+}
+
+.console .error {
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.table-scroll {
+  overflow-x: auto;
+  border: var(--rule);
+  background: var(--paper);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.84rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border-bottom: var(--rule);
+  vertical-align: top;
+}
+
+th {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+td.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+tbody tr:hover {
+  background: var(--panel);
+}
+
+/* -------------------------------------------------------------- estimate UI */
+
+.est {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 0 0.25rem;
+  margin-left: 0.3rem;
+  cursor: help;
+  white-space: nowrap;
+  vertical-align: 0.1em;
+}
+
+.panel {
+  border: var(--rule);
+  background: var(--panel);
+  padding: 1rem 1.1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* A panel next to a taller panel would otherwise stretch its own rows apart. */
+  align-content: start;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.panel h3 {
+  font-size: 1.05rem;
+}
+
+.panel p,
+.panel li {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+.panel ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.panel strong {
+  color: var(--ink);
+}
+
+.panel.loud {
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.panel.loud p,
+.panel.loud li {
+  color: var(--ink);
+}
+
+.grid-2 {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 860px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------------------------- code */
+
+.code {
+  margin: 0;
+  background: var(--sunk);
+  border: var(--rule);
+  padding: 0.7rem 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  overflow: auto;
+  max-height: 24rem;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.code-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  margin-bottom: 0.4rem;
+}
+
+/* Only the label is set in capitals. Uppercasing a byte figure turns kB into KB,
+   which means something else. */
+.code-head b {
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------- tabs */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 1.25rem;
+}
+
+.tab {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: transparent;
+  border: var(--rule);
+  border-bottom: 0;
+  color: var(--ink-muted);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  margin-right: -1px;
+}
+
+.tab[aria-selected='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.verdict {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 0.7rem;
+  background: var(--panel);
+  overflow-wrap: anywhere;
+}
+
+.verdict b {
+  color: var(--accent);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.9rem;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.kv dt {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.kv dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+footer {
+  padding-block: 2.5rem 3.5rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+footer .wrap {
+  display: grid;
+  gap: 0.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

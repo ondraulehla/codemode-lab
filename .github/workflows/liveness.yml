@@ -1,0 +1,83 @@
+name: liveness
+
+# The claim-rot guard.
+#
+# This repo publishes measured numbers. Somebody else owns every server behind
+# them, so a tool list, a CORS header or a payload size can change without notice
+# and the published numbers become lies. scripts/liveness.mjs re-measures every
+# claim and exits non-zero naming the one that went stale.
+#
+# Courtesy, because these servers are free and paid for by other people:
+# once a day, serial, one job at a time, and never a tool that spends the
+# provider's money. DeepWiki's ask_question is never called by anything in this
+# repo, here least of all.
+#
+# No secret is read. The keyless servers are the whole point of this run. Apify
+# needs a bearer token, so the probe skips it and says so.
+on:
+  schedule:
+    # 06:17 UTC. Off the hour on purpose: the scheduler queues heavily at :00 and
+    # a delayed run makes the daily report land at a different time every day.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Two probes must never overlap, so a manual run waits for the scheduled one
+  # instead of doubling the traffic. Nothing is cancelled: a half finished probe
+  # has already cost the servers the requests it made.
+  group: liveness
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: re-measure every published claim
+    runs-on: ubuntu-latest
+    # The largest measured call alone takes about a minute. Four concurrent wiki
+    # reads in the winning task take a few more. Thirty minutes is slack, not need.
+    timeout-minutes: 30
+    steps:
+      - name: check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: set up node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: install
+        run: npm ci
+
+      # The probe imports the built packages, so the build must run first.
+      - name: build
+        run: npx tsc --build
+
+      - name: probe
+        run: node scripts/liveness.mjs | tee liveness.log
+
+      - name: put the summary on the run page
+        if: always()
+        run: |
+          {
+            echo '## liveness'
+            echo ''
+            echo '```'
+            cat liveness.log || echo 'the probe produced no output'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Kept even when the probe fails, because a failed probe is exactly the run
+      # somebody will want the raw numbers from.
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: liveness-${{ github.run_id }}
+          path: |
+            results/liveness-latest.json
+            liveness.log
+          retention-days: 90
+          if-no-files-found: warn

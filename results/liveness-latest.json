@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-09-21T16:24:52.000Z",
+  "finishedAt": "2026-09-21T16:26:32.186Z",
+  "node": "v26.5.0",
+  "origin": "https://ulehla.dev",
+  "windowTokens": 200000,
+  "bytesPerTokenBand": [
+    3.3,
+    3.8
+  ],
+  "tolerances": {
+    "toolsList": 0.1,
+    "payload": 0.35
+  },
+  "ok": true,
+  "stale": [],
+  "servers": [
+    {
+      "id": "deepwiki",
+      "url": "https://mcp.deepwiki.com/mcp",
+      "checks": [
+        {
+          "claim": "transport mode",
+          "ok": true,
+          "recorded": "stateless",
+          "measured": "stateless"
+        },
+        {
+          "claim": "tool count",
+          "ok": true,
+          "recorded": 3,
+          "measured": 3
+        },
+        {
+          "claim": "tools JSON bytes",
+          "ok": true,
+          "recorded": 1526,
+          "measured": 1526,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "typed surface bytes",
+          "ok": true,
+          "recorded": 1157,
+          "measured": 1157,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "CORS from https://ulehla.dev",
+          "ok": true,
+          "recorded": "open",
+          "measured": "open (*)",
+          "note": "preflight HTTP 200"
+        },
+        {
+          "claim": "payload of read_wiki_contents",
+          "ok": true,
+          "recorded": "1.48 MB",
+          "measured": "1.48 MB",
+          "note": "wire bytes, drift 0.0%, tolerance 35%"
+        }
+      ],
+      "exposedHeaders": null,
+      "payload": {
+        "tool": "read_wiki_contents",
+        "args": {
+          "repoName": "apify/apify-mcp-server"
+        },
+        "recordedWireBytes": 1550347,
+        "measuredWireBytes": 1550347,
+        "measuredTextBytes": 745654,
+        "estTokensLow": 196225,
+        "estTokensHigh": 225956,
+        "windowShareLow": 0.981125,
+        "windowShareHigh": 1.12978,
+        "ms": 55748
+      },
+      "ok": true
+    },
+    {
+      "id": "context7",
+      "url": "https://mcp.context7.com/mcp",
+      "checks": [
+        {
+          "claim": "transport mode",
+          "ok": true,
+          "recorded": "stateless",
+          "measured": "stateless"
+        },
+        {
+          "claim": "tool count",
+          "ok": true,
+          "recorded": 2,
+          "measured": 2
+        },
+        {
+          "claim": "tools JSON bytes",
+          "ok": true,
+          "recorded": 4874,
+          "measured": 4874,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "typed surface bytes",
+          "ok": true,
+          "recorded": 3016,
+          "measured": 3016,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "CORS from https://ulehla.dev",
+          "ok": true,
+          "recorded": "open",
+          "measured": "open (*)",
+          "note": "preflight HTTP 200"
+        }
+      ],
+      "exposedHeaders": null,
+      "ok": true
+    },
+    {
+      "id": "mslearn",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "checks": [
+        {
+          "claim": "transport mode",
+          "ok": true,
+          "recorded": "stateless",
+          "measured": "stateless"
+        },
+        {
+          "claim": "tool count",
+          "ok": true,
+          "recorded": 3,
+          "measured": 3
+        },
+        {
+          "claim": "tools JSON bytes",
+          "ok": true,
+          "recorded": 4868,
+          "measured": 4868,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "typed surface bytes",
+          "ok": true,
+          "recorded": 2806,
+          "measured": 2806,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "CORS from https://ulehla.dev",
+          "ok": true,
+          "recorded": "open",
+          "measured": "open (*)",
+          "note": "preflight HTTP 204"
+        },
+        {
+          "claim": "payload of microsoft_docs_search",
+          "ok": true,
+          "recorded": "48.4 kB",
+          "measured": "48.4 kB",
+          "note": "wire bytes, drift 0.0%, tolerance 35%"
+        }
+      ],
+      "exposedHeaders": null,
+      "payload": {
+        "tool": "microsoft_docs_search",
+        "args": {
+          "query": "durable functions orchestration patterns"
+        },
+        "recordedWireBytes": 49595,
+        "measuredWireBytes": 49595,
+        "measuredTextBytes": 24187,
+        "estTokensLow": 6365,
+        "estTokensHigh": 7329,
+        "windowShareLow": 0.031825,
+        "windowShareHigh": 0.036645,
+        "ms": 704
+      },
+      "ok": true
+    },
+    {
+      "id": "gitmcp",
+      "url": "https://gitmcp.io/docs",
+      "checks": [
+        {
+          "claim": "transport mode",
+          "ok": true,
+          "recorded": "session",
+          "measured": "session"
+        },
+        {
+          "claim": "tool count",
+          "ok": true,
+          "recorded": 5,
+          "measured": 5
+        },
+        {
+          "claim": "tools JSON bytes",
+          "ok": true,
+          "recorded": 2890,
+          "measured": 2890,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "typed surface bytes",
+          "ok": true,
+          "recorded": 2418,
+          "measured": 2418,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "CORS from https://ulehla.dev",
+          "ok": true,
+          "recorded": "open",
+          "measured": "open (*)",
+          "note": "preflight HTTP 204"
+        }
+      ],
+      "exposedHeaders": null,
+      "ok": true
+    },
+    {
+      "id": "huggingface",
+      "url": "https://huggingface.co/mcp",
+      "checks": [
+        {
+          "claim": "transport mode",
+          "ok": true,
+          "recorded": "session",
+          "measured": "session"
+        },
+        {
+          "claim": "tool count",
+          "ok": true,
+          "recorded": 4,
+          "measured": 4
+        },
+        {
+          "claim": "tools JSON bytes",
+          "ok": true,
+          "recorded": 18828,
+          "measured": 18828,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "typed surface bytes",
+          "ok": true,
+          "recorded": 6980,
+          "measured": 6980,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "CORS from https://ulehla.dev",
+          "ok": true,
+          "recorded": "open",
+          "measured": "open (https://ulehla.dev)",
+          "note": "preflight HTTP 200"
+        }
+      ],
+      "exposedHeaders": null,
+      "ok": true
+    },
+    {
+      "id": "apify",
+      "url": "https://mcp.apify.com/?tools=search-actors,fetch-actor-details,search-apify-docs,fetch-apify-docs&telemetry-enabled=false",
+      "checks": [
+        {
+          "claim": "transport mode",
+          "ok": true,
+          "recorded": "session",
+          "measured": "session"
+        },
+        {
+          "claim": "tool count",
+          "ok": true,
+          "recorded": 4,
+          "measured": 4
+        },
+        {
+          "claim": "tools JSON bytes",
+          "ok": true,
+          "recorded": 21539,
+          "measured": 21539,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "typed surface bytes",
+          "ok": true,
+          "recorded": 14535,
+          "measured": 14535,
+          "note": "drift 0.0%, tolerance 10%"
+        },
+        {
+          "claim": "CORS from https://ulehla.dev",
+          "ok": true,
+          "recorded": "closed",
+          "measured": "closed",
+          "note": "preflight HTTP 404"
+        },
+        {
+          "claim": "payload of fetch-apify-docs",
+          "ok": true,
+          "recorded": "6.2 kB",
+          "measured": "6.3 kB",
+          "note": "wire bytes, drift +1.8%, tolerance 35%"
+        }
+      ],
+      "exposedHeaders": null,
+      "payload": {
+        "tool": "fetch-apify-docs",
+        "args": {
+          "url": "https://docs.apify.com/platform/actors"
+        },
+        "recordedWireBytes": 6300,
+        "measuredWireBytes": 6411,
+        "measuredTextBytes": 3037,
+        "estTokensLow": 799,
+        "estTokensHigh": 920,
+        "windowShareLow": 0.003995,
+        "windowShareHigh": 0.0046,
+        "ms": 528
+      },
+      "ok": true
+    }
+  ],
+  "tasks": [
+    {
+      "id": "cross-repo-scan",
+      "expectCodeModeWins": true,
+      "ok": true,
+      "calls": 4,
+      "boundaryInBytes": 1786374,
+      "returnedBytes": 603,
+      "reduction": 2962.5,
+      "estTokensLow": 470098,
+      "estTokensHigh": 541325,
+      "windowShareLow": 2.35049,
+      "windowShareHigh": 2.706625,
+      "ms": 7110,
+      "verdictHeld": true
+    },
+    {
+      "id": "sequential-pair",
+      "expectCodeModeWins": false,
+      "ok": true,
+      "calls": 2,
+      "boundaryInBytes": 6198,
+      "returnedBytes": 4344,
+      "reduction": 1.4,
+      "estTokensLow": 1631,
+      "estTokensHigh": 1878,
+      "windowShareLow": 0.008155,
+      "windowShareHigh": 0.00939,
+      "ms": 2502,
+      "verdictHeld": true
+    },
+    {
+      "id": "single-call",
+      "expectCodeModeWins": false,
+      "ok": true,
+      "calls": 1,
+      "boundaryInBytes": 1030,
+      "returnedBytes": 1064,
+      "reduction": 1,
+      "estTokensLow": 271,
+      "estTokensHigh": 312,
+      "windowShareLow": 0.001355,
+      "windowShareHigh": 0.00156,
+      "ms": 380,
+      "verdictHeld": true
+    }
+  ]
+}

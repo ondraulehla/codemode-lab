@@ -1,0 +1,60 @@
+---
+import WindowMeter from './WindowMeter.astro'
+
+interface Props {
+  kind: 'direct' | 'code'
+  title: string
+  note: string
+  /** Draw the sandbox boundary. The headline race does. The small tasks do not. */
+  sandbox?: boolean
+}
+
+const { kind, title, note, sandbox = false } = Astro.props
+---
+
+<article class="arm" data-arm={kind} data-state="idle">
+  <div class="arm-head">
+    <div>
+      <h3>{title}</h3>
+      <p>{note}</p>
+    </div>
+    <span class="status" data-role="status">idle</span>
+  </div>
+
+  <div class="arm-body">
+    <WindowMeter />
+
+    {kind === 'direct' && <div class="ledger" data-role="ledger"></div>}
+
+    {
+      sandbox && (
+        <div class="sandbox">
+          <div class="sandbox-caption">
+            <span>iframe sandbox</span>
+            <span>opaque origin</span>
+            <span>default-src 'none'</span>
+            <b>no network</b>
+          </div>
+          <div class="pile" data-role="pile">
+            <p class="pile-empty">nothing inside yet</p>
+          </div>
+          <div class="crossing">
+            <span class="arrow">&lt;&lt;&lt;</span>
+            <span>pulled in by tool calls, stays inside</span>
+            <span class="out" data-role="in-total">0 B</span>
+          </div>
+          <div class="crossing">
+            <span class="arrow">&gt;&gt;&gt;</span>
+            <span>crosses out to the model</span>
+            <span class="out" data-role="out">0 B</span>
+          </div>
+          <div data-role="sandbox-mount" hidden></div>
+        </div>
+      )
+    }
+
+    {kind === 'code' && <pre class="console" data-role="console" aria-label="program output" />}
+
+    <div data-role="summary"></div>
+  </div>
+</article>

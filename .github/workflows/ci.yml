@@ -1,0 +1,72 @@
+name: ci
+
+# Free, and offline apart from the npm registry. No secret is read here, so a pull
+# request from a fork runs exactly the checks the default branch runs. Nothing in
+# this workflow calls an MCP server: live measurement belongs in liveness.yml, on a
+# schedule, so a busy pull request day never turns into a burst of traffic at
+# somebody else's free server.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build and test on node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Node 20 is the floor the root package.json declares. Node 22 is what the
+      # author runs. Both must stay green, and one failing leg must not hide the
+      # other, so the matrix does not stop at the first failure.
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - name: check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: set up node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: install
+        run: npm ci
+
+      - name: typecheck and build every package
+        run: npx tsc --build
+
+      # The suite is allowed to be empty while packages are still landing. An empty
+      # run is not a failure. A broken test is.
+      - name: test
+        run: npx vitest run --passWithNoTests
+
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: set up node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: install
+        run: npm ci
+
+      # One leg only. Formatting does not change with the node version, and two
+      # identical failures make the log harder to read, not easier.
+      - name: check formatting
+        run: npx prettier --check .

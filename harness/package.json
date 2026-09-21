@@ -1,0 +1,19 @@
+{
+  "name": "@codemode-lab/harness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Measures billed tokens for each arm. Runs locally, never in CI.",
+  "scripts": {
+    "probe": "node probe-auth.mjs",
+    "sweep": "node run.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.278",
+    "@codemode-lab/mcp-client": "0.1.0",
+    "@codemode-lab/meter": "0.1.0",
+    "@codemode-lab/runtime": "0.1.0",
+    "@codemode-lab/typegen": "0.1.0",
+    "zod": "^4.0.0"
+  }
+}

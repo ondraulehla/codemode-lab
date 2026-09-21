@@ -1,0 +1,20 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/meter"
+    },
+    {
+      "path": "packages/mcp-client"
+    },
+    {
+      "path": "packages/typegen"
+    },
+    {
+      "path": "packages/runtime"
+    },
+    {
+      "path": "packages/cli"
+    }
+  ]
+}
