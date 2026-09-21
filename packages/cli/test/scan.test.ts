@@ -229,11 +229,16 @@ describe('verdict', () => {
 
   it('always states a band and never a single confident token count', () => {
     const v = verdict(report({ probes: [probe(683_700)] }))
-    // The measured cloudflare/agents payload: 92% to 106% of a 200K window.
+    // The window size is named once, on the definition clause. The payload clause
+    // then says "of the window", because repeating "200K" in one sentence reads
+    // like two different windows.
     expect(v).toMatch(/roughly [\d,]+ to [\d,]+ tokens/)
-    expect(v).toMatch(/which is \d+% to \d+% of a 200K window/)
+    expect(v).toMatch(/which is \d+% to \d+% of the window/)
+    expect(v).toContain('of a 200K window')
     expect(v).toContain('179,921 to 207,182 tokens')
-    expect(v).toContain('90% to 104% of a 200K window')
+    expect(v).toContain('90% to 104% of the window')
+    // The point of the test: a band, never one confident number.
+    expect(v).not.toMatch(/roughly [\d,]+ tokens[^ ]/)
   })
 
   it('takes the window size from the caller', () => {
