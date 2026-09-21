@@ -1,0 +1,482 @@
+{
+  "recordedAt": "2026-09-21T20:03:12.577Z",
+  "note": "Measured, not staged. Every byte count and every timing in this file came from one real run against the live server on the date above. The page replays it.",
+  "windowTokens": 200000,
+  "bytesPerTokenBand": {
+    "low": 3.8,
+    "high": 3.3
+  },
+  "server": {
+    "id": "deepwiki",
+    "label": "DeepWiki",
+    "url": "https://mcp.deepwiki.com/mcp"
+  },
+  "task": {
+    "id": "table-heavy-page",
+    "title": "Which page of each dump holds the most table rows?",
+    "question": "DeepWiki returns each repository's documentation as one markdown dump. The dump is a series of pages. Every page starts with a line of the form '# Page: <title>'. Count a table row as any line that starts with the pipe character. For cloudflare/agents, e2b-dev/E2B and nodejs/undici, find the page that holds the most table rows. Give the exact page title for each repo, copied character for character, and copy the first table line of that page as evidence.",
+    "why": "Three payloads, 1.39 MB of text, about 375,000 to 430,000 estimated tokens, and an answer of about 300 bytes. The direct arm cannot hold even the first two dumps. The rule needs page bodies, not page names, so the cheap structure tool cannot shortcut it.",
+    "expectCodeModeWins": true,
+    "program": "// Three dumps, 1.39 MB in, about 300 bytes out.\n//\n// The three payloads are fetched concurrently and scanned inside the sandbox. None\n// of them ever reaches the model.\nconst repos = ['cloudflare/agents', 'e2b-dev/E2B', 'nodejs/undici']\n\nconst results = await Promise.all(\n  repos.map(async (repo) => {\n    const dump = await deepwiki.read_wiki_contents({ repoName: repo })\n    const pages = dump.split(/^# Page: /m).slice(1)\n    let best = null\n\n    for (const page of pages) {\n      const title = page.split('\\n', 1)[0].trim()\n      const lines = page.split('\\n')\n      const rows = lines.filter((l) => l.startsWith('|'))\n      if (!best || rows.length > best.rows) {\n        best = { title, rows: rows.length, evidence: rows[0] ?? null }\n      }\n    }\n\n    console.log(`${repo}: ${dump.length} chars, ${pages.length} pages, top page ${best.rows} rows`)\n    return { repo, ...best }\n  }),\n)\n\nreturn results\n",
+    "programBytes": 911
+  },
+  "surface": {
+    "rawSchemaBytes": 444,
+    "typedSurfaceBytes": 516,
+    "typedSurface": "/**\n * Generated from the live tools/list of \"deepwiki\".\n * 1 tool. Do not edit.\n *\n * Every function here runs INSIDE the sandbox and calls OUT over the bridge.\n * Results you do not return never leave the sandbox, which is the point.\n */\ndeclare namespace deepwiki {\n  /**\n   * View documentation about a GitHub repository.\n   */\n  export function read_wiki_contents(args: {\n    /** GitHub repository in owner/repo format (e.g. \"facebook/react\"). */\n    repoName: string\n  }): Promise<{\n    result: string\n  }>\n\n}\n",
+    "toolCount": 1
+  },
+  "direct": {
+    "events": [
+      {
+        "t": 919,
+        "kind": "call",
+        "tool": "read_wiki_contents",
+        "arg": "cloudflare/agents"
+      },
+      {
+        "t": 1124,
+        "kind": "progress",
+        "wire": 1586
+      },
+      {
+        "t": 2145,
+        "kind": "progress",
+        "wire": 49126
+      },
+      {
+        "t": 3067,
+        "kind": "progress",
+        "wire": 89282
+      },
+      {
+        "t": 3783,
+        "kind": "progress",
+        "wire": 131028
+      },
+      {
+        "t": 5180,
+        "kind": "progress",
+        "wire": 172024
+      },
+      {
+        "t": 6265,
+        "kind": "progress",
+        "wire": 212966
+      },
+      {
+        "t": 8587,
+        "kind": "progress",
+        "wire": 253944
+      },
+      {
+        "t": 9710,
+        "kind": "progress",
+        "wire": 294868
+      },
+      {
+        "t": 12309,
+        "kind": "progress",
+        "wire": 335864
+      },
+      {
+        "t": 13940,
+        "kind": "progress",
+        "wire": 376806
+      },
+      {
+        "t": 15549,
+        "kind": "progress",
+        "wire": 417784
+      },
+      {
+        "t": 16577,
+        "kind": "progress",
+        "wire": 458708
+      },
+      {
+        "t": 17971,
+        "kind": "progress",
+        "wire": 499704
+      },
+      {
+        "t": 19158,
+        "kind": "progress",
+        "wire": 540646
+      },
+      {
+        "t": 20696,
+        "kind": "progress",
+        "wire": 581624
+      },
+      {
+        "t": 21982,
+        "kind": "progress",
+        "wire": 622548
+      },
+      {
+        "t": 24179,
+        "kind": "progress",
+        "wire": 663544
+      },
+      {
+        "t": 26248,
+        "kind": "progress",
+        "wire": 704486
+      },
+      {
+        "t": 27887,
+        "kind": "progress",
+        "wire": 745464
+      },
+      {
+        "t": 29029,
+        "kind": "progress",
+        "wire": 786388
+      },
+      {
+        "t": 30465,
+        "kind": "progress",
+        "wire": 827384
+      },
+      {
+        "t": 31130,
+        "kind": "progress",
+        "wire": 868326
+      },
+      {
+        "t": 32386,
+        "kind": "progress",
+        "wire": 909304
+      },
+      {
+        "t": 33151,
+        "kind": "progress",
+        "wire": 950228
+      },
+      {
+        "t": 34096,
+        "kind": "progress",
+        "wire": 991224
+      },
+      {
+        "t": 34491,
+        "kind": "progress",
+        "wire": 1032166
+      },
+      {
+        "t": 35355,
+        "kind": "progress",
+        "wire": 1073144
+      },
+      {
+        "t": 36073,
+        "kind": "progress",
+        "wire": 1114068
+      },
+      {
+        "t": 37182,
+        "kind": "progress",
+        "wire": 1155064
+      },
+      {
+        "t": 38249,
+        "kind": "progress",
+        "wire": 1196006
+      },
+      {
+        "t": 40925,
+        "kind": "progress",
+        "wire": 1236984
+      },
+      {
+        "t": 42014,
+        "kind": "progress",
+        "wire": 1277908
+      },
+      {
+        "t": 43127,
+        "kind": "progress",
+        "wire": 1318904
+      },
+      {
+        "t": 43822,
+        "kind": "progress",
+        "wire": 1359846
+      },
+      {
+        "t": 45305,
+        "kind": "progress",
+        "wire": 1400824
+      },
+      {
+        "t": 46400,
+        "kind": "result",
+        "tool": "read_wiki_contents",
+        "arg": "cloudflare/agents",
+        "wire": 1436795,
+        "text": 700150,
+        "cumulativeText": 700150,
+        "ms": 45275
+      },
+      {
+        "t": 46400,
+        "kind": "call",
+        "tool": "read_wiki_contents",
+        "arg": "e2b-dev/E2B"
+      },
+      {
+        "t": 46581,
+        "kind": "progress",
+        "wire": 1586
+      },
+      {
+        "t": 48497,
+        "kind": "progress",
+        "wire": 42427
+      },
+      {
+        "t": 49415,
+        "kind": "progress",
+        "wire": 83351
+      },
+      {
+        "t": 50321,
+        "kind": "progress",
+        "wire": 124347
+      },
+      {
+        "t": 51107,
+        "kind": "progress",
+        "wire": 165289
+      },
+      {
+        "t": 52304,
+        "kind": "progress",
+        "wire": 206267
+      },
+      {
+        "t": 52680,
+        "kind": "progress",
+        "wire": 247191
+      },
+      {
+        "t": 53593,
+        "kind": "progress",
+        "wire": 288187
+      },
+      {
+        "t": 54512,
+        "kind": "progress",
+        "wire": 329129
+      },
+      {
+        "t": 56959,
+        "kind": "progress",
+        "wire": 370107
+      },
+      {
+        "t": 58188,
+        "kind": "progress",
+        "wire": 411031
+      },
+      {
+        "t": 60311,
+        "kind": "progress",
+        "wire": 452027
+      },
+      {
+        "t": 62016,
+        "kind": "progress",
+        "wire": 492969
+      },
+      {
+        "t": 63520,
+        "kind": "progress",
+        "wire": 533947
+      },
+      {
+        "t": 64431,
+        "kind": "progress",
+        "wire": 574854
+      },
+      {
+        "t": 65789,
+        "kind": "progress",
+        "wire": 615867
+      },
+      {
+        "t": 66516,
+        "kind": "progress",
+        "wire": 656809
+      },
+      {
+        "t": 67416,
+        "kind": "progress",
+        "wire": 697787
+      },
+      {
+        "t": 68322,
+        "kind": "progress",
+        "wire": 738711
+      },
+      {
+        "t": 69642,
+        "kind": "progress",
+        "wire": 779707
+      },
+      {
+        "t": 70400,
+        "kind": "progress",
+        "wire": 820649
+      },
+      {
+        "t": 70812,
+        "kind": "result",
+        "tool": "read_wiki_contents",
+        "arg": "e2b-dev/E2B",
+        "wire": 845005,
+        "text": 412636,
+        "cumulativeText": 1112786,
+        "ms": 24231
+      },
+      {
+        "t": 70812,
+        "kind": "blocked",
+        "reason": "The results already in the window pass 200,000 tokens at the most generous rate this page uses. The remaining calls are not sent.",
+        "unsent": [
+          "nodejs/undici"
+        ]
+      }
+    ],
+    "calls": [
+      {
+        "arg": "cloudflare/agents",
+        "wireBytes": 1436795,
+        "textBytes": 700150,
+        "ms": 45275
+      },
+      {
+        "arg": "e2b-dev/E2B",
+        "wireBytes": 845005,
+        "textBytes": 412636,
+        "ms": 24231
+      }
+    ],
+    "totals": {
+      "calls": 2,
+      "plannedCalls": 3,
+      "textBytes": 1112786,
+      "intoWindowBytes": 1113302,
+      "intoWindowTokens": {
+        "low": 292974,
+        "high": 337364
+      },
+      "windowPercent": {
+        "low": 146,
+        "high": 169
+      },
+      "ms": 70812
+    }
+  },
+  "codemode": {
+    "events": [
+      {
+        "t": 42,
+        "kind": "call",
+        "tool": "deepwiki.read_wiki_contents",
+        "bytes": 32,
+        "id": 1
+      },
+      {
+        "t": 42,
+        "kind": "call",
+        "tool": "deepwiki.read_wiki_contents",
+        "bytes": 26,
+        "id": 2
+      },
+      {
+        "t": 42,
+        "kind": "call",
+        "tool": "deepwiki.read_wiki_contents",
+        "bytes": 28,
+        "id": 3
+      },
+      {
+        "t": 40607,
+        "kind": "payload",
+        "tool": "deepwiki.read_wiki_contents",
+        "bytes": 700150,
+        "id": 1
+      },
+      {
+        "t": 72111,
+        "kind": "payload",
+        "tool": "deepwiki.read_wiki_contents",
+        "bytes": 412636,
+        "id": 2
+      },
+      {
+        "t": 93512,
+        "kind": "payload",
+        "tool": "deepwiki.read_wiki_contents",
+        "bytes": 280987,
+        "id": 3
+      },
+      {
+        "t": 93521,
+        "kind": "return",
+        "bytes": 462
+      }
+    ],
+    "logs": [
+      {
+        "t": 40613,
+        "text": "cloudflare/agents: 699986 chars, 61 pages, top page 62 rows"
+      },
+      {
+        "t": 72114,
+        "text": "e2b-dev/E2B: 412590 chars, 48 pages, top page 32 rows"
+      },
+      {
+        "t": 93515,
+        "text": "nodejs/undici: 280976 chars, 20 pages, top page 52 rows"
+      }
+    ],
+    "ok": true,
+    "failure": null,
+    "value": [
+      {
+        "repo": "cloudflare/agents",
+        "title": "Interactive Playground",
+        "rows": 62,
+        "evidence": "| Configuration Type | Count | Purpose |"
+      },
+      {
+        "repo": "e2b-dev/E2B",
+        "title": "Template Builder API",
+        "rows": 32,
+        "evidence": "| Instruction Type | Purpose | Generated By |"
+      },
+      {
+        "repo": "nodejs/undici",
+        "title": "Request and Response Objects",
+        "rows": 52,
+        "evidence": "| Property | Type | Description |"
+      }
+    ],
+    "returnedText": "[\n  {\n    \"repo\": \"cloudflare/agents\",\n    \"title\": \"Interactive Playground\",\n    \"rows\": 62,\n    \"evidence\": \"| Configuration Type | Count | Purpose |\"\n  },\n  {\n    \"repo\": \"e2b-dev/E2B\",\n    \"title\": \"Template Builder API\",\n    \"rows\": 32,\n    \"evidence\": \"| Instruction Type | Purpose | Generated By |\"\n  },\n  {\n    \"repo\": \"nodejs/undici\",\n    \"title\": \"Request and Response Objects\",\n    \"rows\": 52,\n    \"evidence\": \"| Property | Type | Description |\"\n  }\n]",
+    "totals": {
+      "calls": 3,
+      "insideSandboxBytes": 1393773,
+      "returnedBytes": 462,
+      "intoWindowBytes": 1889,
+      "intoWindowTokens": {
+        "low": 497,
+        "high": 572
+      },
+      "ratio": 3017,
+      "ms": 93524
+    }
+  }
+}
