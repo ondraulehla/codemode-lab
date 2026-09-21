@@ -81,6 +81,21 @@ export function apifyServer() {
  * and the MCP signal this benchmark looks for is about 8,000 tokens. The signal
  * would sit inside the noise.
  */
+/**
+ * The exact tools an arm may call, as a hard allowlist.
+ *
+ * A permission policy is a request. This is a lock, and it fixes a second bug the
+ * first sweep exposed: the direct arm loaded every tool its servers offered, while
+ * the code mode arm was wrapped to only the tools the task declared. The direct arm
+ * had strictly more capability, so the two arms were not answering the same
+ * question with the same means, and the comparison meant nothing.
+ */
+export function allowedToolsFor(task) {
+  return Object.entries(task.servers).flatMap(([server, tools]) =>
+    tools.map((t) => `mcp__${server}__${t}`),
+  )
+}
+
 export function base(task, cfg) {
   return {
     model: cfg.model,
@@ -91,7 +106,13 @@ export function base(task, cfg) {
     settingSources: [],
     strictMcpConfig: true,
     persistSession: false,
-    permissionMode: 'bypassPermissions',
+    // NOT bypassPermissions. That mode bypasses ALL permission checks, including
+    // the per-tool always_deny below, and the first sweep proved it: the direct arm
+    // answered cross-repo-scan with verbatim quotes and file citations on under
+    // 8,000 input tokens, which only DeepWiki's LLM-backed ask_question can produce.
+    // The tool this harness had explicitly denied, because it spends the provider's
+    // money, was called anyway. 'dontAsk' denies what is not pre-approved instead.
+    permissionMode: 'dontAsk',
     systemPrompt: { type: 'custom', prompt: task.systemPrompt, snapshot: false },
     maxTurns: cfg.maxTurns ?? 12,
     maxBudgetUsd: cfg.maxBudgetUsd ?? 2,

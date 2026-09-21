@@ -1,0 +1,21 @@
+{
+  "title": "Which page of each dump holds the most table rows?",
+  "question": "DeepWiki returns each repository's documentation as one markdown dump. The dump is a series of pages. Every page starts with a line of the form '# Page: <title>'. Count a table row as any line that starts with the pipe character. For cloudflare/agents, e2b-dev/E2B and nodejs/undici, find the page that holds the most table rows. Give the exact page title for each repo, copied character for character, and copy the first table line of that page as evidence.",
+  "servers": {
+    "deepwiki": ["read_wiki_contents"]
+  },
+  "why": "Three payloads, 1.39 MB of text, about 375,000 to 430,000 estimated tokens, and an answer of about 300 bytes. The direct arm cannot hold even the first two dumps. The rule needs page bodies, not page names, so the cheap structure tool cannot shortcut it.",
+  "expectCodeModeWins": true,
+  "timeoutMs": 300000,
+  "mayNotComplete": ["A-uncached", "A-cached"],
+  "mayNotCompleteWhy": "1.39 MB of text is several times a 200K window. A direct arm that puts each result in its context cannot finish, and that is the finding rather than a broken run.",
+  "expect": {
+    "mustMention": [
+      "Interactive Playground",
+      "Template Builder API",
+      "Request and Response Objects"
+    ],
+    "note": "All three are DeepWiki page titles, each verified at zero hits by GitHub code search inside its own repository. All three must appear, so one lucky guess does not pass. The evidence lines are NOT graded, because two of them are generic table headers a model could invent. Smallest margin: 9 rows (39 percent) on e2b-dev/E2B."
+  },
+  "id": "table-heavy-page"
+}

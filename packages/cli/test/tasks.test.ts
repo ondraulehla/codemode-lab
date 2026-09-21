@@ -1,12 +1,23 @@
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { utf8Bytes } from '@codemode-lab/meter'
-import { SERVERS } from '@codemode-lab/mcp-client'
 import { runInNodeSandbox } from '@codemode-lab/runtime/node'
-import type { BoundaryEvent, ToolTable } from '@codemode-lab/runtime'
-import { listTasks, loadTask } from '../src/tasks.js'
+import type { ToolTable } from '@codemode-lab/runtime'
+import { listTasks, loadTask, type LoadedTask } from '../src/tasks.js'
 
 const TASKS_DIR = fileURLToPath(new URL('../../../tasks', import.meta.url))
+
+const ids = await listTasks(TASKS_DIR)
+const tasks: LoadedTask[] = await Promise.all(ids.map((id) => loadTask(TASKS_DIR, id)))
+const byId = new Map(tasks.map((t) => [t.id, t]))
+
+/** Fields the loader does not type, read straight off the task.json. */
+type Extra = {
+  expect: { mustMention: string[]; note: string }
+  predictionUncertain?: boolean
+  mayNotComplete?: string[]
+  mayNotCompleteWhy?: string
+}
+const extra = (t: LoadedTask) => t as unknown as Extra
 
 /**
  * The shipped programs are run here against fake tools.
@@ -15,200 +26,250 @@ const TASKS_DIR = fileURLToPath(new URL('../../../tasks', import.meta.url))
  * backspace character, and a regex written that way fails silently. Executing the
  * files offline is the cheapest way to keep that from coming back.
  */
-async function runTask(
-  id: string,
-  tools: ToolTable,
-): Promise<{ value: unknown; in: number; returnedBytes: number; ok: boolean; error?: string }> {
-  const task = await loadTask(TASKS_DIR, id)
-  const boundary: BoundaryEvent[] = []
-  const r = await runInNodeSandbox(task.program, {
-    tools,
-    timeoutMs: 15_000,
-    onBoundary: (ev) => boundary.push(ev),
-  })
-  return {
-    value: r.value,
-    ok: r.ok,
-    error: r.error,
-    in: boundary.filter((b) => b.direction === 'in').reduce((n, b) => n + b.bytes, 0),
-    returnedBytes: utf8Bytes(r.value === undefined ? '' : JSON.stringify(r.value)),
-  }
+async function runTask(id: string, tools: ToolTable) {
+  return runInNodeSandbox(byId.get(id)!.program, { tools, timeoutMs: 20_000 })
 }
 
 describe('the task set', () => {
-  it('holds the three tasks the repo documents', async () => {
-    expect(await listTasks(TASKS_DIR)).toEqual([
-      'cross-repo-scan',
-      'sequential-pair',
-      'single-call',
+  it('holds the five tasks the repo documents', () => {
+    expect(ids).toEqual([
+      'one-big-payload',
+      'outline-leaves',
+      'structure-rank',
+      'table-heavy-page',
+      'topic-overlap',
     ])
   })
 
-  it('predicts a loss more often than a win, which is the point of the set', async () => {
-    const ids = await listTasks(TASKS_DIR)
-    const tasks = await Promise.all(ids.map((id) => loadTask(TASKS_DIR, id)))
-    const wins = tasks.filter((t) => t.expectCodeModeWins)
-    expect(wins.map((t) => t.id)).toEqual(['cross-repo-scan'])
-    // Every task says why it is in the set, including the ones written to lose.
-    for (const t of tasks) {
-      expect(t.why.length).toBeGreaterThan(40)
-      expect(t.question.length).toBeGreaterThan(20)
-      expect(t.id).toBe(ids[ids.indexOf(t.id)])
-    }
+  it('carries tasks written to lose, which is the point of the set', () => {
+    const losers = tasks.filter((t) => !t.expectCodeModeWins).map((t) => t.id)
+    expect(losers, 'a set with no losing case is marketing').toEqual([
+      'outline-leaves',
+      'structure-rank',
+    ])
   })
 
-  it('names only servers the client knows, and never one that needs a token', async () => {
-    for (const id of await listTasks(TASKS_DIR)) {
-      const task = await loadTask(TASKS_DIR, id)
-      for (const serverId of Object.keys(task.servers)) {
-        const spec = SERVERS.find((s) => s.id === serverId)
-        expect(spec, `${id} names ${serverId}`).toBeDefined()
-        expect(spec!.needsAuth, `${id} uses ${serverId}`).toBe(false)
-        expect(task.servers[serverId].length).toBeGreaterThan(0)
+  it('records one prediction as uncertain rather than guessing', () => {
+    // Pre-registering an honest "I do not know" is worth more than a confident
+    // prediction that gets quietly corrected after the run.
+    const unsure = tasks.filter((t) => extra(t).predictionUncertain).map((t) => t.id)
+    expect(unsure).toEqual(['topic-overlap'])
+  })
+})
+
+describe('no grading string may appear in its own question', () => {
+  // THIS is the test the first task set needed and did not have.
+  //
+  // The original question named four repositories and the grading checked that the
+  // answer mentioned two of them. Both strings were in the question, so restating
+  // the question scored a pass, and an arm that called no tool at all looked
+  // correct. Every token number from that sweep was worthless because of it.
+  for (const task of tasks) {
+    it(`${task.id}`, () => {
+      const question = task.question.toLowerCase()
+      for (const graded of extra(task).expect.mustMention) {
+        expect(
+          question.includes(graded.toLowerCase()),
+          `"${graded}" appears in the question, so the answer can be copied from the prompt`,
+        ).toBe(false)
       }
-    }
-  })
+    })
+  }
+})
 
-  it('ships a program that parses, for every task', async () => {
-    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
-    for (const id of await listTasks(TASKS_DIR)) {
-      const task = await loadTask(TASKS_DIR, id)
-      const names = Object.keys(task.servers)
-      // The same construction the guest uses, so a program that parses here parses there.
+describe('every task declares what it needs', () => {
+  for (const task of tasks) {
+    it(`${task.id} is complete and consistent`, () => {
+      const x = extra(task)
+      expect(task.question.length, 'a question must actually ask something').toBeGreaterThan(80)
+      expect(x.expect.mustMention.length).toBeGreaterThan(0)
       expect(
-        () => Reflect.construct(AsyncFunction, [...names, 'console', task.program]),
-        `${id}/program.js`,
-      ).not.toThrow()
-    }
+        x.expect.note.length,
+        'grading without a stated reason is not grading',
+      ).toBeGreaterThan(60)
+      expect(Object.keys(task.servers).length).toBeGreaterThan(0)
+      expect(
+        task.why.length,
+        'a task that cannot say why it exists does not belong',
+      ).toBeGreaterThan(80)
+
+      // An arm may only fail where the task says so, and it must say why.
+      if (x.mayNotComplete?.length) expect(x.mayNotCompleteWhy).toBeTruthy()
+    })
+  }
+})
+
+describe('every program is real JavaScript that targets its own tools', () => {
+  for (const task of tasks) {
+    const source = task.program
+
+    it(`${task.id} parses as an async body`, () => {
+      // The same construction the sandbox guest uses. A program that does not parse
+      // here would fail in the sandbox for a reason unrelated to the hypothesis.
+      const names = Object.keys(task.servers)
+      const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+      expect(() => Reflect.construct(AsyncFunction, [...names, 'console', source])).not.toThrow()
+    })
+
+    it(`${task.id} calls only the tools its task declares`, () => {
+      for (const [server, allowed] of Object.entries(task.servers)) {
+        const dotted = [
+          ...source.matchAll(new RegExp(`\\b${server}\\.([A-Za-z0-9_]+)\\s*\\(`, 'g')),
+        ].map((m) => m[1])
+        const bracketed = [
+          ...source.matchAll(new RegExp(`\\b${server}\\[['"]([^'"]+)['"]\\]\\s*\\(`, 'g')),
+        ].map((m) => m[1])
+
+        for (const used of [...dotted, ...bracketed]) {
+          expect(
+            allowed,
+            `${task.id} calls ${server}.${used}, which its task does not allow`,
+          ).toContain(used)
+        }
+      }
+    })
+
+    it(`${task.id} returns something`, () => {
+      expect(source, 'a program with no return hands the model nothing').toMatch(/\breturn\b/)
+    })
+  }
+})
+
+describe('the set separates the two terms it is trying to measure', () => {
+  // Payload size and fan-out moved together in the first set, so no result could say
+  // which one decided the outcome. These two tasks pull them apart.
+  it('one-big-payload is one call with a large payload', () => {
+    expect(byId.get('one-big-payload')!.expectCodeModeWins).toBe(true)
+    expect(byId.get('one-big-payload')!.program).not.toMatch(/Promise\.all/)
   })
 
-  it('writes no em dash in any task file', async () => {
-    for (const id of await listTasks(TASKS_DIR)) {
-      const task = await loadTask(TASKS_DIR, id)
-      expect(task.program, `${id}/program.js`).not.toContain('\u2014')
-      expect(`${task.title}${task.question}${task.why}`, `${id}/task.json`).not.toContain('\u2014')
-    }
-  })
-
-  it('reports a missing task by its path', async () => {
-    await expect(loadTask(TASKS_DIR, 'no-such-task')).rejects.toThrow(/ENOENT/)
+  it('structure-rank is several small calls', () => {
+    expect(byId.get('structure-rank')!.expectCodeModeWins).toBe(false)
+    expect(byId.get('structure-rank')!.program).toMatch(/Promise\.all/)
   })
 })
 
-describe('cross-repo-scan, the task that should win', () => {
-  it('scans four payloads and returns four short rows', async () => {
-    // A quarter of a megabyte per repo, with one real WebSocket line buried in each.
-    const wiki = (repo: string) =>
-      [
-        '# ' + repo,
-        'filler '.repeat(30_000),
-        'The Agent exposes a WebSocket API on /ws.',
-        'more text',
-      ].join('\n')
+describe('the programs behave, run offline against fake tools', () => {
+  it('one-big-payload ignores mermaid fences, which a naive count would not', async () => {
+    const dump = [
+      '# Page: Small',
+      '```js',
+      'a',
+      '```',
+      '# Page: Winner',
+      '## The Heading',
+      '```ts',
+      'b',
+      '```',
+      '```js',
+      'c',
+      '```',
+      '# Page: Diagrams',
+      '```mermaid',
+      'graph TD',
+      '```',
+      '```mermaid',
+      'graph LR',
+      '```',
+      '```mermaid',
+      'graph BT',
+      '```',
+    ].join('\n')
 
-    const seen: string[] = []
-    const tools: ToolTable = {
-      'deepwiki.read_wiki_contents': async (args) => {
-        const { repoName } = args as { repoName: string }
-        seen.push(repoName)
-        return wiki(repoName)
-      },
-    }
-
-    const r = await runTask('cross-repo-scan', tools)
+    const r = await runTask('one-big-payload', {
+      'deepwiki.read_wiki_contents': async () => dump,
+    })
     expect(r.ok, r.error).toBe(true)
+    // Diagrams has the most fenced blocks and must still lose.
+    expect(r.value).toEqual({ title: 'Winner', blocks: 2, heading: '## The Heading' })
+  })
 
-    const rows = r.value as {
-      repo: string
-      charsScanned: number
-      mentions: number
-      evidence: string
-    }[]
-    expect(rows).toHaveLength(4)
-    expect(seen.sort()).toEqual([
-      'cloudflare/agents',
-      'e2b-dev/E2B',
-      'modelcontextprotocol/servers',
-      'nodejs/undici',
-    ])
+  it('outline-leaves takes top level entries only, not every childless entry', async () => {
+    // The bug this asserts against: an earlier program called any entry with no
+    // deeper neighbour a leaf, which matched sub-entries too and returned 17 titles
+    // where the truth is 4.
+    const outline = [
+      'Available pages for withastro/astro:',
+      '',
+      '- 1 Alpha',
+      '- 2 Beta',
+      '  - 2.1 Beta Child',
+      '  - 2.2 Beta Other',
+      '- 3 Gamma',
+    ].join('\n')
 
+    const r = await runTask('outline-leaves', {
+      'deepwiki.read_wiki_structure': async () => outline,
+    })
+    expect(r.ok, r.error).toBe(true)
+    expect(r.value).toEqual(['Alpha', 'Gamma'])
+  })
+
+  it('structure-rank counts dash entries and joins the ranking', async () => {
+    const sizes: Record<string, number> = {
+      'apify/apify-mcp-server': 3,
+      'cloudflare/agents': 5,
+      'nodejs/undici': 1,
+      'withastro/astro': 2,
+    }
+    const r = await runTask('structure-rank', {
+      'deepwiki.read_wiki_structure': async (args) => {
+        const repo = (args as { repoName: string }).repoName
+        return Array.from({ length: sizes[repo] }, (_, i) => `- ${i + 1} Page`).join('\n')
+      },
+    })
+    expect(r.ok, r.error).toBe(true)
+    expect(r.value).toBe(
+      'cloudflare/agents > apify/apify-mcp-server > withastro/astro > nodejs/undici',
+    )
+  })
+
+  it('table-heavy-page counts pipe rows per page and keeps the first as evidence', async () => {
+    const dump = [
+      '# Page: Thin',
+      '| only |',
+      '# Page: Fat',
+      '| first | row |',
+      '| second | row |',
+    ].join('\n')
+
+    const r = await runTask('table-heavy-page', {
+      'deepwiki.read_wiki_contents': async () => dump,
+    })
+    expect(r.ok, r.error).toBe(true)
+    const rows = r.value as { repo: string; title: string; rows: number; evidence: string }[]
+    expect(rows).toHaveLength(3)
     for (const row of rows) {
-      // The word-boundary regex has to survive being read from a file.
-      expect(row.mentions).toBe(1)
-      expect(row.evidence).toBe('The Agent exposes a WebSocket API on /ws.')
-      expect(row.charsScanned).toBeGreaterThan(200_000)
+      expect(row.title).toBe('Fat')
+      expect(row.rows).toBe(2)
+      expect(row.evidence).toBe('| first | row |')
     }
-
-    // The shape the project claims: a lot in, a little out.
-    expect(r.in).toBeGreaterThan(800_000)
-    expect(r.returnedBytes).toBeLessThan(600)
-    expect(Math.round(r.in / r.returnedBytes)).toBeGreaterThan(1_000)
   })
 
-  it('returns a null evidence line rather than inventing one', async () => {
-    const tools: ToolTable = {
-      'deepwiki.read_wiki_contents': async () => 'nothing about sockets here\nnor here',
+  it('topic-overlap keeps titles shared by two or more, and drops the numbering', async () => {
+    const outlines: Record<string, string[]> = {
+      'apify/apify-mcp-server': ['1 Shared', '2 Only Apify'],
+      'cloudflare/agents': ['1 Shared', '2 Also Shared'],
+      'e2b-dev/E2B': ['1 Also Shared'],
+      'modelcontextprotocol/servers': ['1 Lonely'],
+      'nodejs/undici': ['1 Shared'],
+      'vercel/ai': ['1 Solo'],
+      'withastro/astro': ['1 Single'],
     }
-    const rows = (await runTask('cross-repo-scan', tools)).value as {
-      mentions: number
-      evidence: null
-    }[]
-    expect(rows.every((row) => row.mentions === 0 && row.evidence === null)).toBe(true)
-  })
-
-  it('does not match WebSocketish words, which is what \\b is for', async () => {
-    const tools: ToolTable = {
-      'deepwiki.read_wiki_contents': async () => 'see MyWebSocketFactory and websocketing',
-    }
-    const rows = (await runTask('cross-repo-scan', tools)).value as { mentions: number }[]
-    expect(rows.every((row) => row.mentions === 0)).toBe(true)
-  })
-})
-
-describe('the tasks written to lose', () => {
-  it('single-call returns the whole payload, so nothing is saved', async () => {
-    const structure = '- 1 Overview\n- 2 Getting Started\n- 3 Content Collections'
-    const r = await runTask('single-call', {
-      'deepwiki.read_wiki_structure': async () => structure,
-    })
-    expect(r.ok, r.error).toBe(true)
-    expect(r.value).toBe(structure)
-    // Everything that came in went back out. Code mode only added a round trip.
-    expect(r.returnedBytes).toBeGreaterThanOrEqual(r.in)
-  })
-
-  it('sequential-pair chains two calls and still returns the whole document', async () => {
-    const doc = 'Server actions are async functions. '.repeat(200)
-    const calls: string[] = []
-    const r = await runTask('sequential-pair', {
-      'context7.resolve-library-id': async () => {
-        calls.push('resolve')
-        return 'Best match: /vercel/next.js (trust score 10)'
-      },
-      'context7.query-docs': async (args) => {
-        calls.push(`query:${(args as { libraryId: string }).libraryId}`)
-        return doc
-      },
-    })
-
-    expect(r.ok, r.error).toBe(true)
-    // The second call depends on the first, so the order is fixed and serial.
-    expect(calls).toEqual(['resolve', 'query:/vercel/next.js'])
-    expect(r.value).toBe(doc)
-    // Truncating here would post a flattering ratio by throwing the answer away.
-    expect(r.returnedBytes).toBeGreaterThan(utf8Bytes(doc))
-  })
-
-  it('sequential-pair falls back to a known library id when the match fails', async () => {
-    const calls: string[] = []
-    const r = await runTask('sequential-pair', {
-      'context7.resolve-library-id': async () => 'no match found',
-      'context7.query-docs': async (args) => {
-        calls.push((args as { libraryId: string }).libraryId)
-        return 'docs'
+    const r = await runTask('topic-overlap', {
+      'deepwiki.read_wiki_structure': async (args) => {
+        const repo = (args as { repoName: string }).repoName
+        return outlines[repo].map((l) => `- ${l}`).join('\n')
       },
     })
     expect(r.ok, r.error).toBe(true)
-    expect(calls).toEqual(['/vercel/next.js'])
+    expect(r.value).toEqual([
+      {
+        title: 'Shared',
+        count: 3,
+        repos: ['apify/apify-mcp-server', 'cloudflare/agents', 'nodejs/undici'],
+      },
+      { title: 'Also Shared', count: 2, repos: ['cloudflare/agents', 'e2b-dev/E2B'] },
+    ])
   })
 })

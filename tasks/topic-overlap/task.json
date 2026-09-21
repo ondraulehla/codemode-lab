@@ -1,0 +1,16 @@
+{
+  "title": "Which documentation topics do several of these repositories share?",
+  "question": "DeepWiki can list the documentation topics of a repository. The list is a numbered outline. Treat every numbered entry, at any depth, as one title, and drop the number.\n\nGet the topic list of these seven repositories: apify/apify-mcp-server, cloudflare/agents, e2b-dev/E2B, modelcontextprotocol/servers, nodejs/undici, vercel/ai and withastro/astro.\n\nFind every title that appears in the topic list of two or more of them. For each such title, give the number of repositories and name them. Sort by that number, highest first.",
+  "servers": {
+    "deepwiki": ["read_wiki_structure"]
+  },
+  "why": "The contested case, and the only one in the set whose outcome cannot be called from byte counts. Seven payloads but only 9.2 kB of text in all, which any window holds comfortably, so the payload argument does not apply. What is left is seven round trips against one program, plus a set intersection. The prediction is recorded as UNCERTAIN on purpose.",
+  "expectCodeModeWins": true,
+  "predictionUncertain": true,
+  "timeoutMs": 180000,
+  "expect": {
+    "mustMention": ["UI Framework Integrations", "Development and Contribution"],
+    "note": "Two exact DeepWiki titles, each shared by exactly two of the seven repositories, so neither can be produced without reading at least four outlines. 'Overview' and 'Glossary' are deliberately NOT graded: they are the two a model could guess. The shared count is not graded either, because it drifts by a title or two over months."
+  },
+  "id": "topic-overlap"
+}

@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
 import { query } from '@anthropic-ai/claude-agent-sdk'
 import { loadTask, listTasks } from '../packages/cli/dist/tasks.js'
-import { arms, SERVERS, UNCACHED_ARMS, CODEMODE_ARMS } from './arms.mjs'
+import { arms, allowedToolsFor, SERVERS, UNCACHED_ARMS, CODEMODE_ARMS } from './arms.mjs'
 import { checkArm, toolTax, AssertionFailed } from './assert.mjs'
 import { buildCodeModeServer, lastRun } from './codemode-tool.mjs'
 import { credentialKind } from './env.mjs'
@@ -142,6 +142,17 @@ async function sweepTask(taskId, cfg) {
   )
 
   const armSet = arms({ ...task, systemPrompt }, picked, cfg)
+
+  // The direct arms get exactly the tools the task declares, and nothing else.
+  // Without this they loaded every tool the server offered, which on DeepWiki meant
+  // ask_question, an LLM-backed tool this harness pays nothing for and the provider
+  // pays for. Arm B is already narrowed by toolTableFrom.
+  const allowed = allowedToolsFor(task)
+  for (const name of Object.keys(armSet)) {
+    if (name === 'floor') continue
+    armSet[name].allowedTools = CODEMODE_ARMS.includes(name) ? ['mcp__codemode__run_code'] : allowed
+  }
+
   // Arm B swaps the remote servers for the single in-process run_code tool.
   for (const name of CODEMODE_ARMS) armSet[name].mcpServers = { codemode: codemodeServer }
 
@@ -156,6 +167,7 @@ async function sweepTask(taskId, cfg) {
         result: run.result,
         initTools: run.initTools,
         cached: !UNCACHED_ARMS.includes(armName),
+        mayNotComplete: (task.mayNotComplete ?? []).includes(armName),
       })
       // The floor arm carries no tools, so it cannot answer the question. It is a
       // token baseline, not a contender, and grading it would always read FAIL.
@@ -182,9 +194,17 @@ async function sweepTask(taskId, cfg) {
         boundary,
         transcript: run.transcript,
       })
+      const outcome =
+        usage.outcome === 'did-not-complete'
+          ? `DID NOT COMPLETE (${usage.subtype}${usage.usageTrustworthy ? '' : ', usage zeroed'})`
+          : g.graded
+            ? g.pass
+              ? 'PASS'
+              : 'FAIL'
+            : '-'
       console.log(
         `in=${usage.input.toLocaleString().padStart(9)} out=${usage.output.toLocaleString().padStart(6)} ` +
-          `cacheR=${usage.cacheRead.toLocaleString().padStart(8)} ${g.graded ? (g.pass ? 'PASS' : 'FAIL') : '-'} ${(run.ms / 1000).toFixed(1)}s`,
+          `cacheR=${usage.cacheRead.toLocaleString().padStart(8)} ${outcome} ${(run.ms / 1000).toFixed(1)}s`,
       )
     } catch (err) {
       const why = err instanceof AssertionFailed ? err.message : `${err.name}: ${err.message}`

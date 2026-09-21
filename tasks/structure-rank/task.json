@@ -1,0 +1,15 @@
+{
+  "title": "Rank four repositories by the size of their topic outline",
+  "question": "Four repositories: apify/apify-mcp-server, cloudflare/agents, nodejs/undici, withastro/astro.\n\nRead the wiki structure of each one. In each structure, count the page entries. A page entry is a line whose first character that is not a space is a dash.\n\nAnswer with exactly one line and nothing else: the four repository ids ranked by that count, most entries first, joined by \" > \" (space, greater-than sign, space). Write the full repository id, in this shape: owner/one > owner/two > owner/three > owner/four",
+  "servers": {
+    "deepwiki": ["read_wiki_structure"]
+  },
+  "why": "The fan-out loser. Four calls, 4.5 kB of text in all, an answer of about 90 bytes. There is nothing to filter, because the whole payload fits any window. Code mode pays for a program, a round trip and JSON quoting and buys nothing. Paired with one-big-payload, which has the opposite shape, this separates the fan-out term from the payload term.",
+  "expectCodeModeWins": false,
+  "timeoutMs": 120000,
+  "expect": {
+    "mustMention": ["cloudflare/agents > apify/apify-mcp-server > withastro/astro > nodejs/undici"],
+    "note": "One exact chain. The question lists the four ids alphabetically and comma separated, so the graded order and separator are both different and no repository name alone scores a pass. The counts are a property of DeepWiki's generated outline, not of the repository, so no model knows them. Gaps between ranks are 20, 10 and 11 entries, so a repository must gain or lose about ten wiki pages before the ranking moves."
+  },
+  "id": "structure-rank"
+}

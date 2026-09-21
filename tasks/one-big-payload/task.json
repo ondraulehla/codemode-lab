@@ -1,0 +1,17 @@
+{
+  "title": "Which page of one large dump holds the most code blocks?",
+  "question": "DeepWiki returns the documentation of modelcontextprotocol/servers as one markdown dump. The dump is a series of pages. Every page starts with a line of the form '# Page: <title>'. Count only fenced blocks that hold code, so skip every fenced block opened with three backticks and the word mermaid. Find the page that holds the most code blocks. Give its exact title, and copy the first line of that page that starts with two hash marks and a space.",
+  "servers": {
+    "deepwiki": ["read_wiki_contents"]
+  },
+  "why": "ONE call, 392 kB. No fan-out, nothing to run in parallel, nothing to loop over. This task exists to isolate the payload term from the fan-out term, which every other task in the set confounds. If code mode wins here, it wins on payload size alone.",
+  "expectCodeModeWins": true,
+  "timeoutMs": 180000,
+  "mayNotComplete": ["A-uncached", "A-cached"],
+  "mayNotCompleteWhy": "392 kB of text is about 103,000 to 119,000 estimated tokens. One payload fits a 200K window, so the direct arm may finish. It may also run out on the second turn, because the payload is re-sent with every turn. Either outcome is a measurement.",
+  "expect": {
+    "mustMention": ["Filesystem Tools Reference", "Tool Categories and Organization"],
+    "note": "Both strings are DeepWiki's own page and heading names, not repository text. GitHub code search returns zero hits for them inside modelcontextprotocol/servers, so a model cannot produce them from memory. Neither appears in the question: it says 'two hash marks and a space' rather than printing the marker. Margin: 18 code blocks against 15, then a cliff to 5."
+  },
+  "id": "one-big-payload"
+}

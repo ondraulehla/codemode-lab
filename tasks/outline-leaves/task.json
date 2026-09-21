@@ -1,0 +1,15 @@
+{
+  "title": "Which outline entries have no sub-entries?",
+  "question": "DeepWiki lists the documentation pages of withastro/astro as a numbered outline. Entries at the top level carry a single number, such as '1' or '2'. Some of them carry indented sub-entries, numbered '1.1' and so on, and some carry none.\n\nGive the exact titles of every TOP LEVEL entry that carries no sub-entry. Ignore the sub-entries themselves. Copy each title character for character.",
+  "servers": {
+    "deepwiki": ["read_wiki_structure"]
+  },
+  "why": "The cheapest loser in the set. One call, 1,030 bytes back, four short strings out. The filter is trivial and the payload is smaller than the program that would filter it. Code mode pays for a program, a round trip and JSON quoting, and saves nothing.\n\nThe question was rewritten after the first run. It said 'every numbered entry that carries no sub-entry', which reads two ways: top level only, or any depth. The reference program took the second reading and returned 17 titles where the truth is 4. The grading passed anyway, because both graded titles appear in both readings, so an ambiguous question would have hidden a real disagreement between the arms.",
+  "expectCodeModeWins": false,
+  "timeoutMs": 90000,
+  "expect": {
+    "mustMention": ["Monorepo Architecture", "Configuration and Type System"],
+    "note": "Both are DeepWiki phrasings, each verified at zero hits by GitHub code search inside withastro/astro. The question names no section at all, only the shape of the outline. Grading two titles out of eleven entries means a new page elsewhere does not break it."
+  },
+  "id": "outline-leaves"
+}

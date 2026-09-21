@@ -22,23 +22,43 @@ export class AssertionFailed extends Error {
  * catches a server that hit the five second `alwaysLoad` connect timeout, which
  * would otherwise silently produce a smaller and wrong tool tax.
  */
-export function checkArm({ arm, result, initTools, expectedTools, cached }) {
+export function checkArm({ arm, result, initTools, expectedTools, cached, mayNotComplete }) {
   if (!result) {
     throw new AssertionFailed('result-present', `arm ${arm} produced no result message`)
   }
 
-  if (result.is_error) {
-    throw new AssertionFailed(
-      'is-error',
-      `arm ${arm} returned is_error with subtype ${result.subtype}`,
-    )
-  }
+  const failed =
+    result.is_error ||
+    result.subtype === 'error_during_execution' ||
+    result.subtype === 'error_max_turns'
 
-  if (result.subtype === 'error_during_execution' || result.subtype === 'error_max_turns') {
-    throw new AssertionFailed(
-      'subtype',
-      `arm ${arm} ended as ${result.subtype}, usage would be unreliable`,
-    )
+  if (failed) {
+    // Two different things look identical here, and telling them apart is the
+    // whole point of this branch.
+    //
+    // A HARNESS failure (bad credential, a dead server, a bug in this code) is
+    // noise and must be discarded. A run that could not finish BECAUSE THE
+    // PAYLOADS DID NOT FIT is the finding this project exists to produce. On
+    // cross-repo-scan the direct arm is supposed to run out of window, and
+    // discarding it would throw away the most important measurement in the set.
+    //
+    // The task declares which arms may legitimately fail. Nothing else may.
+    if (!mayNotComplete) {
+      throw new AssertionFailed(
+        'is-error',
+        `arm ${arm} ended as ${result.subtype}, and the task did not declare that it may`,
+      )
+    }
+
+    const u = totalUsage(result)
+    return {
+      ...u,
+      outcome: 'did-not-complete',
+      subtype: result.subtype,
+      // A crashed run can carry zeroed usage. Say so, rather than publishing a
+      // zero that reads like a measurement of nothing being spent.
+      usageTrustworthy: u.input > 0 || u.output > 0,
+    }
   }
 
   if (expectedTools) {
@@ -76,7 +96,7 @@ export function checkArm({ arm, result, initTools, expectedTools, cached }) {
     )
   }
 
-  return u
+  return { ...u, outcome: 'completed', usageTrustworthy: true }
 }
 
 /**
