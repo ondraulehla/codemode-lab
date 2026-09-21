@@ -46,3 +46,32 @@ Two byte counts are recorded for every call, and they differ by about 2x.
 `textBytes` is the text a model would actually be handed. Anything said about a
 context window uses `textBytes`. Using wire bytes for that would double the number
 and flatter the argument.
+
+## The caveat that belongs next to every number here
+
+The direct arm fails the three large tasks. Read its own words before drawing the
+obvious conclusion:
+
+> "All three dumps were fetched successfully but each exceeds the output token
+> limit, so they were written to files under /tmp/... I'm blocked and need your
+> input."
+
+Nothing crashed and nothing was invented. Claude Code spilled the oversized tool
+results to disk instead of into the context, the agent had no tool left that could
+read them, and it stopped and said so. That is correct behaviour.
+
+It is also a consequence of how this harness is built. Every arm runs with
+`tools: []`, which removes Bash, Read and every other built-in. A normal Claude Code
+session keeps those, so it could open the spilled file and grep it, and it would
+then answer the question without code mode at all.
+
+So the honest claim is narrower than "code mode wins". The claim is:
+
+**A payload that does not fit has to be processed somewhere other than the context
+window. Code mode is one way to do that. Claude Code's own spill-to-disk plus file
+tools is another.** This harness removes the second option on purpose, to isolate
+the first. A reader who has file tools available should weigh that.
+
+What the numbers do show, and this part is not an artifact: on the same question,
+with the same model, the code mode arm answered correctly on 8,788 input tokens
+where the direct arm needed 53,416 and still could not finish.
