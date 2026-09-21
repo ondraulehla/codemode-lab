@@ -185,11 +185,7 @@ export const SERVERS: ServerSpec[] = [
       args: { url: 'https://docs.apify.com/platform/actors' },
       bytes: 6300,
     },
-    notes:
-      'The only server in this set where the DEFINITION tax is genuinely large. Four tools cost ' +
-      '21,539 bytes, nearly twice DeepWiki, Context7 and Microsoft Learn combined, and search-actors ' +
-      'alone is 10,089 bytes, which is 6.6x the entire DeepWiki server. It is here to show the other ' +
-      'axis of the problem: payloads are small, definitions are not.',
+    notes: APIFY_NOTES,
   },
 ]
 
