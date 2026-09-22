@@ -4,7 +4,7 @@
   "servers": {
     "deepwiki": ["read_wiki_structure"]
   },
-  "why": "The contested case, and the only one in the set whose outcome cannot be called from byte counts. Seven payloads but only 9.2 kB of text in all, which any window holds comfortably, so the payload argument does not apply. What is left is seven round trips against one program, plus a set intersection. The prediction is recorded as UNCERTAIN on purpose.",
+  "why": "The contested case, and the only one in the set whose outcome cannot be called from byte counts. Seven payloads but only 9,226 bytes (9.0 KiB) of text in all, which any window holds comfortably, so the payload argument does not apply. What is left is seven round trips against one program, plus a set intersection. The prediction is recorded as UNCERTAIN on purpose.",
   "expectCodeModeWins": true,
   "predictionUncertain": true,
   "timeoutMs": 180000,

@@ -22,7 +22,7 @@ export default defineConfig({
     ],
   },
   test: {
-    include: ['packages/*/test/**/*.test.ts'],
+    include: ['packages/*/test/**/*.test.ts', 'harness/test/**/*.test.mjs'],
     environment: 'node',
     // A worker sandbox and a tsc child process are both slower than a unit test.
     testTimeout: 30_000,

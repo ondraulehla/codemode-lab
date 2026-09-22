@@ -19,18 +19,19 @@ export class AssertionFailed extends Error {
  * Check one completed arm.
  *
  * `expectedTools` is the exact tool list the arm should have loaded. Comparing it
- * catches a server that hit the five second `alwaysLoad` connect timeout, which
- * would otherwise silently produce a smaller and wrong tool tax.
+ * catches a server that hit the `alwaysLoad` connect timeout, which would silently
+ * produce a smaller and wrong definition tax, and a `disallowedTools` entry that
+ * did not take effect, which would put the two arms back on different tools.
+ * run.mjs did not pass it until 2026-09-22, so until then this check never ran.
  */
 export function checkArm({ arm, result, initTools, expectedTools, cached, mayNotComplete }) {
   if (!result) {
     throw new AssertionFailed('result-present', `arm ${arm} produced no result message`)
   }
 
-  const failed =
-    result.is_error ||
-    result.subtype === 'error_during_execution' ||
-    result.subtype === 'error_max_turns'
+  // Every error subtype counts, including a spent budget, which the raw arm can hit
+  // honestly when a large result fills its window.
+  const failed = result.is_error || String(result.subtype ?? '').startsWith('error')
 
   if (failed) {
     // Two different things look identical here, and telling them apart is the
@@ -38,9 +39,9 @@ export function checkArm({ arm, result, initTools, expectedTools, cached, mayNot
     //
     // A HARNESS failure (bad credential, a dead server, a bug in this code) is
     // noise and must be discarded. A run that could not finish BECAUSE THE
-    // PAYLOADS DID NOT FIT is the finding this project exists to produce. On
-    // cross-repo-scan the direct arm is supposed to run out of window, and
-    // discarding it would throw away the most important measurement in the set.
+    // PAYLOADS DID NOT FIT is the finding this project exists to produce. On the
+    // large tasks the raw arm may run out of window or budget, and discarding it
+    // would throw away the most important measurement in the set.
     //
     // The task declares which arms may legitimately fail. Nothing else may.
     if (!mayNotComplete) {
@@ -145,15 +146,4 @@ export function totalUsage(result) {
   }
 
   return out
-}
-
-/**
- * The tool tax, in tokens the API counted.
- *
- * This is the identity the whole four-arm design exists to make available. Both
- * arms run uncached, so the entire prompt lands in input_tokens, and the only
- * difference between them is the tool definitions.
- */
-export function toolTax(floorUsage, armUsage) {
-  return armUsage.input - floorUsage.input
 }

@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { runInNodeSandbox } from '@codemode-lab/runtime/node'
 import type { ToolTable } from '@codemode-lab/runtime'
 import { listTasks, loadTask, type LoadedTask } from '../src/tasks.js'
+// The harness is plain JavaScript outside the packages. Its arm names are the
+// only list the task files may draw from.
+import { ARM_NAMES, DEFAULT_ARMS } from '../../../harness/arms.mjs'
 
 const TASKS_DIR = fileURLToPath(new URL('../../../tasks', import.meta.url))
 
@@ -16,6 +19,9 @@ type Extra = {
   predictionUncertain?: boolean
   mayNotComplete?: string[]
   mayNotCompleteWhy?: string
+  extraArms?: string[]
+  extraArmsWhy?: string
+  predictions?: Record<string, string>
 }
 const extra = (t: LoadedTask) => t as unknown as Extra
 
@@ -95,6 +101,30 @@ describe('every task declares what it needs', () => {
 
       // An arm may only fail where the task says so, and it must say why.
       if (x.mayNotComplete?.length) expect(x.mayNotCompleteWhy).toBeTruthy()
+      for (const arm of x.mayNotComplete ?? []) expect(ARM_NAMES).toContain(arm)
+    })
+  }
+})
+
+describe('arms added to a task are named, justified and predicted', () => {
+  for (const task of tasks) {
+    const x = extra(task)
+    if (!x.extraArms?.length) continue
+
+    it(`${task.id} adds only arms the harness knows, with a reason`, () => {
+      for (const arm of x.extraArms!) {
+        expect(ARM_NAMES).toContain(arm)
+        expect(DEFAULT_ARMS, `${arm} already runs on every task`).not.toContain(arm)
+      }
+      expect(x.extraArmsWhy?.length ?? 0).toBeGreaterThan(80)
+    })
+
+    it(`${task.id} recorded a dated prediction for each added arm before running it`, () => {
+      expect(x.predictions?.recorded).toMatch(/^\d{4}-\d{2}-\d{2}, before/)
+      for (const arm of x.extraArms!) {
+        const said = Object.keys(x.predictions ?? {}).some((k) => k.endsWith(`vs ${arm}`))
+        expect(said, `no prediction names ${arm}`).toBe(true)
+      }
     })
   }
 })
@@ -182,6 +212,23 @@ describe('the programs behave, run offline against fake tools', () => {
     expect(r.ok, r.error).toBe(true)
     // Diagrams has the most fenced blocks and must still lose.
     expect(r.value).toEqual({ title: 'Winner', blocks: 2, heading: '## The Heading' })
+  })
+
+  it('one-big-payload fails loudly when the dump has no page markers', async () => {
+    // A quiet null used to come back here, and a null reads like an answer.
+    const r = await runTask('one-big-payload', {
+      'deepwiki.read_wiki_contents': async () => 'This repository has not been indexed yet.',
+    })
+    expect(r.ok).toBe(false)
+    expect(r.error).toContain("no '# Page:' markers")
+  })
+
+  it('table-heavy-page fails loudly when a dump has no page markers', async () => {
+    const r = await runTask('table-heavy-page', {
+      'deepwiki.read_wiki_contents': async () => 'Repository not found.',
+    })
+    expect(r.ok).toBe(false)
+    expect(r.error).toContain("no '# Page:' markers")
   })
 
   it('outline-leaves takes top level entries only, not every childless entry', async () => {

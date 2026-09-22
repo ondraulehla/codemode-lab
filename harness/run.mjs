@@ -3,7 +3,21 @@
  *
  *   source ~/.codemode-lab-token
  *   node harness/probe-auth.mjs          # the gate. Run it first, every time.
- *   node harness/run.mjs --task cross-repo-scan --reps 1
+ *   node harness/run.mjs --task outline-leaves --reps 1
+ *   node harness/run.mjs --reps 5        # every task, five repetitions
+ *
+ * Flags:
+ *   --task <id> | --tasks <a,b>   which tasks (default: all)
+ *   --reps <n>                    repetitions of the whole set (default 1)
+ *   --arms <a,b>                  run exactly these arms instead of each task's set
+ *   --model <id>                  default claude-opus-5
+ *   --effort <level>              default low
+ *   --max-turns <n>               default 12
+ *   --max-usd <n>                 per-arm budget cap, default 2
+ *   --raw-max-usd <n>             budget cap for A-raw, default 15
+ *   --raw-max-output-tokens <n>   MCP output limit for A-raw, default 1000000
+ *   --no-latest                   keep results/latest.json as it is. For a check run:
+ *                                 the project page reads latest.json through its summary
  *
  * It writes to results/ and stops there. Committing is a human decision, so a bad
  * sweep never lands in git history on its own.
@@ -12,16 +26,20 @@
  * parallel arms would also contend for the same remote MCP servers, which are other
  * people's free infrastructure.
  */
-import { writeFile, mkdir } from 'node:fs/promises'
-import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
-import { query } from '@anthropic-ai/claude-agent-sdk'
 import { loadTask, listTasks } from '../packages/cli/dist/tasks.js'
-import { arms, allowedToolsFor, SERVERS, UNCACHED_ARMS, CODEMODE_ARMS } from './arms.mjs'
-import { checkArm, toolTax, AssertionFailed } from './assert.mjs'
-import { buildCodeModeServer, lastRun } from './codemode-tool.mjs'
+import {
+  ARM_NAMES,
+  CODEMODE_ARMS,
+  DEFAULT_ARMS,
+  SERVERS,
+  disallowedFor,
+  expectedToolsFor,
+} from './arms.mjs'
+import { buildCodeModeServer } from './codemode-tool.mjs'
+import { runOneArm, sdkVersion, taskSummary } from './core.mjs'
 import { credentialKind } from './env.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -34,224 +52,127 @@ function arg(name, fallback) {
   return i === -1 ? fallback : process.argv[i + 1]
 }
 
-/**
- * The exact Claude Code build inside the SDK.
- *
- * `claude --version` reports the interactive CLI on the machine, which is a
- * different build. Recording the wrong one makes week over week numbers
- * incomparable, so this reads the SDK's own manifest.
- *
- * The manifest is not in the package's `exports` map, so it is resolved by path
- * from the package entry point rather than required by specifier.
- */
-function sdkVersion() {
-  try {
-    const require = createRequire(import.meta.url)
-    const entry = require.resolve('@anthropic-ai/claude-agent-sdk')
-    const pkgDir = dirname(entry)
-    const readJson = (name) => JSON.parse(readFileSync(join(pkgDir, name), 'utf8'))
-    // Neither manifest.json nor package.json is in the package's `exports` map, so
-    // both are read by path. A require by specifier throws ERR_PACKAGE_PATH_NOT_EXPORTED.
-    const manifest = readJson('manifest.json')
-    const pkg = readJson('package.json')
-    // The manifest's `version` IS the Claude Code build. There is no separate
-    // claudeCodeVersion key, and reading one printed "undefined" into the results.
-    return {
-      claudeCode: manifest.version,
-      commit: manifest.commit,
-      buildDate: manifest.buildDate,
-      sdk: pkg.version,
-    }
-  } catch (err) {
-    return { sdk: 'unknown', claudeCode: 'unknown', commit: `unreadable: ${err.message}` }
-  }
+function list(value) {
+  return value
+    ? value
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : null
 }
 
-/**
- * Run one arm to completion and collect everything needed to judge it.
- *
- * Only the LAST result message is kept. `modelUsage` is cumulative across the
- * session, so an earlier one would undercount, and summing per-step output tokens
- * would overcount because those are placeholders copied from message_start.
- */
-async function runArm({ armName, options, prompt }) {
-  const started = Date.now()
-  let initTools = null
-  let last = null
-  const transcript = []
-
-  const q = query({ prompt, options })
-
-  for await (const m of q) {
-    if (m.type === 'system' && m.subtype === 'init') initTools = m.tools ?? []
-    if (m.type === 'assistant') {
-      const text = (m.message?.content ?? [])
-        .filter((c) => c.type === 'text')
-        .map((c) => c.text)
-        .join('')
-      if (text) transcript.push({ role: 'assistant', text })
-    }
-    if (m.type === 'result') last = m
+/** The arms a task runs: the default set plus what the task names, in a fixed order. */
+function armsFor(task, override) {
+  const wanted = new Set(override ?? [...DEFAULT_ARMS, ...(task.extraArms ?? [])])
+  for (const a of wanted) {
+    if (!ARM_NAMES.includes(a))
+      throw new Error(`unknown arm "${a}". Known: ${ARM_NAMES.join(', ')}`)
   }
-
-  return { armName, result: last, initTools, transcript, ms: Date.now() - started }
-}
-
-/**
- * Grade the answer deterministically.
- *
- * A cheaper arm that fails the task is not cheaper. Grading is kept dumb on
- * purpose: substring checks a human can verify by reading. A model grading a model
- * would put the thing under test inside the measurement.
- */
-function grade(task, transcript) {
-  const expect = task.expect
-  if (!expect?.mustMention?.length)
-    return { graded: false, reason: 'no expect.mustMention in task.json' }
-
-  const text = transcript
-    .map((t) => t.text)
-    .join('\n')
-    .toLowerCase()
-  const missing = expect.mustMention.filter((m) => !text.includes(String(m).toLowerCase()))
-  return { graded: true, pass: missing.length === 0, missing }
+  // The floor is the baseline for the definition tax and the memory control. A
+  // sweep without it has neither.
+  wanted.add('floor')
+  return ARM_NAMES.filter((a) => wanted.has(a))
 }
 
 async function sweepTask(taskId, cfg) {
   const task = await loadTask(TASKS, taskId)
   const allow = task.servers
-  const picked = Object.fromEntries(
-    Object.keys(allow).map((id) => {
-      if (!SERVERS[id])
-        throw new Error(`task ${taskId} names server "${id}" which arms.mjs does not define`)
-      return [id, SERVERS[id]]
-    }),
-  )
+  for (const id of Object.keys(allow)) {
+    if (!SERVERS[id])
+      throw new Error(`task ${taskId} names server "${id}" which arms.mjs does not define`)
+  }
 
   const systemPrompt =
     'You are answering one question using the tools you have. ' +
     'Answer concisely and state the evidence. Do not explain your process.'
 
   const {
-    server: codemodeServer,
+    server: codemode,
     surfaceBytes,
     surfaceSource,
+    stats,
+    serverTools,
+    instructionsBytes,
   } = await buildCodeModeServer(
-    Object.fromEntries(Object.entries(picked).map(([id, s]) => [id, { url: s.url }])),
+    Object.fromEntries(Object.keys(allow).map((id) => [id, { url: SERVERS[id].url }])),
     allow,
   )
 
-  const armSet = arms({ ...task, systemPrompt }, picked, cfg)
+  // The direct arms see the same tools as the code mode surface: the ones the task
+  // allows. Everything else the live server offers is removed from their context,
+  // and denied by name on the server entry as well, in case a removal ever fails.
+  const disallowed = disallowedFor(task, serverTools)
+  const picked = Object.fromEntries(
+    Object.keys(allow).map((id) => {
+      const denied = (serverTools[id] ?? []).filter((t) => !allow[id].includes(t))
+      const { shape: _shape, ...spec } = SERVERS[id]
+      return [
+        id,
+        { ...spec, tools: denied.map((name) => ({ name, permission_policy: 'always_deny' })) },
+      ]
+    }),
+  )
 
-  // The direct arms get exactly the tools the task declares, and nothing else.
-  // Without this they loaded every tool the server offered, which on DeepWiki meant
-  // ask_question, an LLM-backed tool this harness pays nothing for and the provider
-  // pays for. Arm B is already narrowed by toolTableFrom.
-  const allowed = allowedToolsFor(task)
-  for (const name of Object.keys(armSet)) {
-    if (name === 'floor') continue
-    armSet[name].allowedTools = CODEMODE_ARMS.includes(name) ? ['mcp__codemode__run_code'] : allowed
-  }
-
-  // Arm B swaps the remote servers for the single in-process run_code tool.
-  for (const name of CODEMODE_ARMS) armSet[name].mcpServers = { codemode: codemodeServer }
-
+  const withPrompt = { ...task, systemPrompt }
   const records = []
 
-  for (const [armName, options] of Object.entries(armSet)) {
-    process.stdout.write(`  ${armName.padEnd(12)} `)
-    try {
-      const run = await runArm({ armName, options, prompt: task.question })
-      const usage = checkArm({
-        arm: armName,
-        result: run.result,
-        initTools: run.initTools,
-        cached: !UNCACHED_ARMS.includes(armName),
-        mayNotComplete: (task.mayNotComplete ?? []).includes(armName),
-      })
-      // The floor arm carries no tools, so it cannot answer the question. It is a
-      // token baseline, not a contender, and grading it would always read FAIL.
-      const g =
-        armName === 'floor'
-          ? { graded: false, reason: 'baseline arm' }
-          : grade(task, run.transcript)
-      const boundary = CODEMODE_ARMS.includes(armName)
-        ? {
-            in: lastRun.boundaryIn,
-            returned: lastRun.returnedBytes,
-            calls: lastRun.calls,
-            programs: lastRun.programs.length,
-          }
-        : null
-
-      records.push({
-        arm: armName,
-        ok: true,
-        usage,
-        grade: g,
-        ms: run.ms,
-        tools: run.initTools,
-        boundary,
-        transcript: run.transcript,
-      })
-      const outcome =
-        usage.outcome === 'did-not-complete'
-          ? `DID NOT COMPLETE (${usage.subtype}${usage.usageTrustworthy ? '' : ', usage zeroed'})`
-          : g.graded
-            ? g.pass
-              ? 'PASS'
-              : 'FAIL'
-            : '-'
-      console.log(
-        `in=${usage.input.toLocaleString().padStart(9)} out=${usage.output.toLocaleString().padStart(6)} ` +
-          `cacheR=${usage.cacheRead.toLocaleString().padStart(8)} ${outcome} ${(run.ms / 1000).toFixed(1)}s`,
-      )
-    } catch (err) {
-      const why = err instanceof AssertionFailed ? err.message : `${err.name}: ${err.message}`
-      records.push({ arm: armName, ok: false, discarded: why })
-      console.log(`DISCARDED  ${why}`)
-    }
+  for (const arm of armsFor(task, cfg.arms)) {
+    records.push(
+      await runOneArm({
+        arm,
+        task: withPrompt,
+        picked,
+        cfg,
+        disallowed,
+        codemode,
+        stats: CODEMODE_ARMS.includes(arm) ? stats : null,
+        expectedTools: expectedToolsFor(arm, task),
+      }),
+    )
   }
-
-  const floor = records.find((r) => r.arm === 'floor' && r.ok)
-  const aUnc = records.find((r) => r.arm === 'A-uncached' && r.ok)
-  const bUnc = records.find((r) => r.arm === 'B-uncached' && r.ok)
 
   return {
     task: taskId,
     question: task.question,
     expectCodeModeWins: task.expectCodeModeWins,
+    predictionUncertain: task.predictionUncertain === true,
     surfaceBytes,
     surfaceSource,
-    toolTax: {
-      direct: floor && aUnc ? toolTax(floor.usage, aUnc.usage) : null,
-      codemode: floor && bUnc ? toolTax(floor.usage, bUnc.usage) : null,
-      note: 'Tokens the API counted. Arm input minus floor input, both uncached. No estimate involved.',
-    },
+    // Server instructions, given to both arms: by Claude Code to the direct arms,
+    // and by the harness to the code mode arm, inside the run_code description.
+    serverInstructionsBytes: instructionsBytes,
+    deniedTools: disallowed,
+    ...taskSummary(records, taskId),
     arms: records,
   }
 }
 
 async function main() {
-  const only = arg('task')
+  const only = list(arg('tasks')) ?? list(arg('task'))
   const reps = Number(arg('reps', '1'))
   const cfg = {
     model: arg('model', 'claude-opus-5'),
+    effort: arg('effort', 'low'),
     maxTurns: Number(arg('max-turns', '12')),
     maxBudgetUsd: Number(arg('max-usd', '2')),
+    rawMaxBudgetUsd: Number(arg('raw-max-usd', '15')),
+    rawMaxOutputTokens: Number(arg('raw-max-output-tokens', '1000000')),
+    arms: list(arg('arms')),
   }
 
-  const ids = only ? [only] : await listTasks(TASKS)
+  const ids = only ?? (await listTasks(TASKS))
   const versions = sdkVersion()
-  const runId = `${new Date().toISOString().replace(/[:.]/g, '-')}`
+  const startedAt = new Date().toISOString()
+  const runId = startedAt.replace(/[:.]/g, '-')
 
   console.log(`\ncodemode-lab sweep ${runId}`)
   console.log(`credential : ${credentialKind()}`)
-  console.log(`model      : ${cfg.model}`)
+  console.log(`model      : ${cfg.model} (effort ${cfg.effort})`)
   console.log(
     `claude code: ${versions.claudeCode} (${versions.commit?.slice(0, 8)}, built ${versions.buildDate})`,
   )
-  console.log(`tasks      : ${ids.join(', ')}  x${reps}\n`)
+  console.log(`tasks      : ${ids.join(', ')}  x${reps}`)
+  console.log(`arms       : ${cfg.arms ? cfg.arms.join(', ') : "each task's own set"}\n`)
 
   const sweeps = []
   for (let rep = 0; rep < reps; rep++) {
@@ -268,29 +189,35 @@ async function main() {
   }
 
   const report = {
+    schemaVersion: 2,
     runId,
-    startedAt: new Date().toISOString(),
+    startedAt,
+    finishedAt: new Date().toISOString(),
     credential: credentialKind(),
     model: cfg.model,
-    effort: 'low',
+    effort: cfg.effort,
     cacheTtl: '5m (FORCE_PROMPT_CACHING_5M)',
+    config: { reps, ...cfg },
     versions,
     sweeps,
     disclosure: [
       'Every token figure here is what the Anthropic API counted, read from modelUsage on the final result message.',
-      'The typed surface in arm B loses some schema detail: recursive $ref collapses, and not/if/then/else are dropped.',
-      'Part of any code mode saving is therefore lost detail, not free compression.',
+      'Per-turn figures are read from each API response and cover the input side only.',
+      'Both arms declare the same tools: the direct arms have every other tool of the server removed.',
+      'Claude Code writes an MCP result over 25,000 tokens to a file. A-uncached and A-cached have no tool to read it; A-files does; A-raw raises the limit.',
       'The Node worker used by arm B is an isolation boundary for measurement, not a security boundary.',
-      'Cost in dollars is never reported as measured. There is no server-side usage API for an individual account.',
+      'No dollar figure here is billed. Costs derived from these tokens use list prices and say so.',
     ],
   }
 
   await mkdir(RESULTS, { recursive: true })
   const out = join(RESULTS, `sweep-${runId}.json`)
   await writeFile(out, JSON.stringify(report, null, 2))
-  await writeFile(join(RESULTS, 'latest.json'), JSON.stringify(report, null, 2))
+  const latest = !process.argv.includes('--no-latest')
+  if (latest) await writeFile(join(RESULTS, 'latest.json'), JSON.stringify(report, null, 2))
 
-  console.log(`written: ${out}`)
+  console.log(`written: ${out}${latest ? ' and results/latest.json' : ''}`)
+  console.log(`Next: node harness/summarize.mjs ${latest ? 'results/latest.json' : out}`)
   console.log(
     'Nothing was committed. Read the file, then commit it yourself if the sweep looks sound.',
   )

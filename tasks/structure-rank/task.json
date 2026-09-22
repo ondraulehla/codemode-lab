@@ -4,7 +4,7 @@
   "servers": {
     "deepwiki": ["read_wiki_structure"]
   },
-  "why": "The fan-out loser. Four calls, 4.5 kB of text in all, an answer of about 90 bytes. There is nothing to filter, because the whole payload fits any window. Code mode pays for a program, a round trip and JSON quoting and buys nothing. Paired with one-big-payload, which has the opposite shape, this separates the fan-out term from the payload term.",
+  "why": "The fan-out loser. Four calls, 4,457 bytes (4.4 KiB) of text in all, an answer of about 90 bytes. There is nothing to filter, because the whole payload fits any window. Code mode pays for a program, a round trip and JSON quoting and buys nothing. Paired with one-big-payload, which has the opposite shape, this separates the fan-out term from the payload term.",
   "expectCodeModeWins": false,
   "timeoutMs": 120000,
   "expect": {

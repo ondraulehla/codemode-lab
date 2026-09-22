@@ -1,0 +1,470 @@
+{
+  "schemaVersion": 2,
+  "runId": "2026-09-22T18-49-17-124Z",
+  "startedAt": "2026-09-22T18:49:17.124Z",
+  "finishedAt": "2026-09-22T18:49:43.610Z",
+  "credential": "subscription-oauth",
+  "model": "claude-opus-5",
+  "effort": "low",
+  "cacheTtl": "5m (FORCE_PROMPT_CACHING_5M)",
+  "config": {
+    "reps": 1,
+    "model": "claude-opus-5",
+    "effort": "low",
+    "maxTurns": 12,
+    "maxBudgetUsd": 2,
+    "rawMaxBudgetUsd": 15,
+    "rawMaxOutputTokens": 1000000,
+    "arms": null
+  },
+  "versions": {
+    "claudeCode": "2.1.278",
+    "commit": "809c980662e3525645594dc8b74f78c38a348db1",
+    "buildDate": "2026-09-19T01:22:08Z",
+    "sdk": "0.3.278"
+  },
+  "sweeps": [
+    {
+      "rep": 0,
+      "task": "outline-leaves",
+      "question": "DeepWiki lists the documentation pages of withastro/astro as a numbered outline. Entries at the top level carry a single number, such as '1' or '2'. Some of them carry indented sub-entries, numbered '1.1' and so on, and some carry none.\n\nGive the exact titles of every TOP LEVEL entry that carries no sub-entry. Ignore the sub-entries themselves. Copy each title character for character.",
+      "expectCodeModeWins": false,
+      "predictionUncertain": false,
+      "surfaceBytes": 513,
+      "surfaceSource": "/**\n * Generated from the live tools/list of \"deepwiki\".\n * 1 tool. Do not edit.\n *\n * Every function here runs INSIDE the sandbox and calls OUT over the bridge.\n * Results you do not return never leave the sandbox, which is the point.\n */\ndeclare namespace deepwiki {\n  /**\n   * Get a list of documentation topics for a GitHub repository.\n   */\n  export function read_wiki_structure(args: {\n    /** GitHub repository in owner/repo format (e.g. \"facebook/react\"). */\n    repoName: string\n  }): Promise<string>\n\n}\n",
+      "serverInstructionsBytes": 3129,
+      "deniedTools": [
+        "mcp__deepwiki__ask_wiki_question",
+        "mcp__deepwiki__read_wiki_contents"
+      ],
+      "memoryControl": {
+        "graded": true,
+        "pass": false
+      },
+      "definitionTax": {
+        "direct": 1289,
+        "codemode": 1282,
+        "note": "First request minus the floor arm first request, both uncached, counted by the API. It holds the tool definitions and any server instructions the client adds."
+      },
+      "extraInputOverFloor": {
+        "direct": 3688,
+        "codemode": 3680,
+        "note": "All input over the floor arm, across every turn: tool results, resent definitions and the arm reading its own earlier output. This is NOT the definition tax."
+      },
+      "arms": [
+        {
+          "arm": "floor",
+          "ok": true,
+          "usage": {
+            "input": 1429,
+            "output": 178,
+            "cacheRead": 0,
+            "cacheCreation": 0,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 990,
+                "output": 19,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-opus-5": {
+                "input": 439,
+                "output": 159,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true
+          },
+          "grade": {
+            "graded": true,
+            "pass": false,
+            "missing": [
+              "Monorepo Architecture",
+              "Configuration and Type System"
+            ]
+          },
+          "answerClass": "wrong",
+          "answer": "I don't have a browsing/fetch tool available in this environment, so I can't retrieve the DeepWiki outline for withastro/astro. Without web access I'd be guessing at the exact page titles, which wouldn't meet your \"character for character\" requirement.\n\nIf you can paste the outline (or enable a web-fetch tool), I'll pick out the top-level entries that have no sub-entries.",
+          "ms": 4049,
+          "apiMs": 3406,
+          "numTurns": 1,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.007254999999999999,
+          "tools": [],
+          "turns": {
+            "turns": 1,
+            "turn1Prompt": 439,
+            "peakPrompt": 439,
+            "toolCalls": {},
+            "toolResults": 0,
+            "toolResultBytes": 0,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 439,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            ]
+          },
+          "boundary": null,
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "I don't have a browsing/fetch tool available in this environment, so I can't retrieve the DeepWiki outline for withastro/astro. Without web access I'd be guessing at the exact page titles, which wouldn't meet your \"character for character\" requirement.\n\nIf you can paste the outline (or enable a web-fetch tool), I'll pick out the top-level entries that have no sub-entries."
+            }
+          ]
+        },
+        {
+          "arm": "A-uncached",
+          "ok": true,
+          "usage": {
+            "input": 5117,
+            "output": 135,
+            "cacheRead": 0,
+            "cacheCreation": 0,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 990,
+                "output": 18,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-opus-5": {
+                "input": 4127,
+                "output": 117,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true
+          },
+          "grade": {
+            "graded": true,
+            "pass": true,
+            "missing": []
+          },
+          "answerClass": "correct",
+          "answer": "Top-level entries with no sub-entries:\n\n- Overview\n- Monorepo Architecture\n- Configuration and Type System\n- Glossary",
+          "ms": 5681,
+          "apiMs": 3129,
+          "numTurns": 2,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.02464,
+          "tools": [
+            "mcp__deepwiki__read_wiki_structure"
+          ],
+          "turns": {
+            "turns": 2,
+            "turn1Prompt": 1728,
+            "peakPrompt": 2399,
+            "toolCalls": {
+              "mcp__deepwiki__read_wiki_structure": 1
+            },
+            "toolResults": 1,
+            "toolResultBytes": 1075,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 1728,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              {
+                "input": 2399,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            ]
+          },
+          "boundary": null,
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "Top-level entries with no sub-entries:\n\n- Overview\n- Monorepo Architecture\n- Configuration and Type System\n- Glossary"
+            }
+          ]
+        },
+        {
+          "arm": "A-cached",
+          "ok": true,
+          "usage": {
+            "input": 994,
+            "output": 135,
+            "cacheRead": 1726,
+            "cacheCreation": 2395,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 990,
+                "output": 18,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-opus-5": {
+                "input": 4,
+                "output": 117,
+                "cacheRead": 1726,
+                "cacheCreation": 2395
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true
+          },
+          "grade": {
+            "graded": true,
+            "pass": true,
+            "missing": []
+          },
+          "answerClass": "correct",
+          "answer": "Top-level entries with no sub-entries:\n\n- Overview\n- Monorepo Architecture\n- Configuration and Type System\n- Glossary",
+          "ms": 6504,
+          "apiMs": 4005,
+          "numTurns": 2,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.01985675,
+          "tools": [
+            "mcp__deepwiki__read_wiki_structure"
+          ],
+          "turns": {
+            "turns": 2,
+            "turn1Prompt": 1728,
+            "peakPrompt": 2397,
+            "toolCalls": {
+              "mcp__deepwiki__read_wiki_structure": 1
+            },
+            "toolResults": 1,
+            "toolResultBytes": 1075,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 2,
+                "cacheRead": 0,
+                "cacheCreation": 1726
+              },
+              {
+                "input": 2,
+                "cacheRead": 1726,
+                "cacheCreation": 669
+              }
+            ]
+          },
+          "boundary": null,
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "Top-level entries with no sub-entries:\n\n- Overview\n- Monorepo Architecture\n- Configuration and Type System\n- Glossary"
+            }
+          ]
+        },
+        {
+          "arm": "B-uncached",
+          "ok": true,
+          "usage": {
+            "input": 5109,
+            "output": 174,
+            "cacheRead": 0,
+            "cacheCreation": 0,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 990,
+                "output": 23,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-opus-5": {
+                "input": 4119,
+                "output": 151,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true
+          },
+          "grade": {
+            "graded": true,
+            "pass": true,
+            "missing": []
+          },
+          "answerClass": "correct",
+          "answer": "Top-level entries without sub-entries:\n\n- **Overview** (1)\n- **Monorepo Architecture** (2)\n- **Configuration and Type System** (6)\n- **Glossary** (11)",
+          "ms": 4738,
+          "apiMs": 3187,
+          "numTurns": 2,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.025474999999999998,
+          "tools": [
+            "mcp__codemode__run_code"
+          ],
+          "turns": {
+            "turns": 2,
+            "turn1Prompt": 1721,
+            "peakPrompt": 2398,
+            "toolCalls": {
+              "mcp__codemode__run_code": 1
+            },
+            "toolResults": 1,
+            "toolResultBytes": 1064,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 1721,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              {
+                "input": 2398,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            ]
+          },
+          "boundary": {
+            "in": 1030,
+            "returnedValue": 1064,
+            "toModel": 1064,
+            "calls": 1,
+            "uniqueCalls": 1,
+            "programs": 1,
+            "failedPrograms": 0,
+            "programLog": [
+              {
+                "code": "return await deepwiki.read_wiki_structure({repoName:\"withastro/astro\"})",
+                "ok": true,
+                "failure": null,
+                "error": null,
+                "ms": 686,
+                "calls": 1,
+                "inBytes": 1030,
+                "toModelBytes": 1064
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "Top-level entries without sub-entries:\n\n- **Overview** (1)\n- **Monorepo Architecture** (2)\n- **Configuration and Type System** (6)\n- **Glossary** (11)"
+            }
+          ]
+        },
+        {
+          "arm": "B-cached",
+          "ok": true,
+          "usage": {
+            "input": 994,
+            "output": 149,
+            "cacheRead": 1718,
+            "cacheCreation": 2400,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 990,
+                "output": 17,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-opus-5": {
+                "input": 4,
+                "output": 132,
+                "cacheRead": 1718,
+                "cacheCreation": 2400
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true
+          },
+          "grade": {
+            "graded": true,
+            "pass": true,
+            "missing": []
+          },
+          "answerClass": "correct",
+          "answer": "Top-level entries with no sub-entries:\n\n- Overview\n- Monorepo Architecture\n- Configuration and Type System\n- Glossary",
+          "ms": 4629,
+          "apiMs": 3198,
+          "numTurns": 2,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.020253999999999998,
+          "tools": [
+            "mcp__codemode__run_code"
+          ],
+          "turns": {
+            "turns": 2,
+            "turn1Prompt": 1720,
+            "peakPrompt": 2402,
+            "toolCalls": {
+              "mcp__codemode__run_code": 1
+            },
+            "toolResults": 1,
+            "toolResultBytes": 1064,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 2,
+                "cacheRead": 0,
+                "cacheCreation": 1718
+              },
+              {
+                "input": 2,
+                "cacheRead": 1718,
+                "cacheCreation": 682
+              }
+            ]
+          },
+          "boundary": {
+            "in": 1030,
+            "returnedValue": 1064,
+            "toModel": 1064,
+            "calls": 1,
+            "uniqueCalls": 1,
+            "programs": 1,
+            "failedPrograms": 0,
+            "programLog": [
+              {
+                "code": "return await deepwiki.read_wiki_structure({repoName:\"withastro/astro\"})",
+                "ok": true,
+                "failure": null,
+                "error": null,
+                "ms": 720,
+                "calls": 1,
+                "inBytes": 1030,
+                "toModelBytes": 1064
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "Top-level entries with no sub-entries:\n\n- Overview\n- Monorepo Architecture\n- Configuration and Type System\n- Glossary"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "disclosure": [
+    "Every token figure here is what the Anthropic API counted, read from modelUsage on the final result message.",
+    "Per-turn figures are read from each API response and cover the input side only.",
+    "Both arms declare the same tools: the direct arms have every other tool of the server removed.",
+    "Claude Code writes an MCP result over 25,000 tokens to a file. A-uncached and A-cached have no tool to read it; A-files does; A-raw raises the limit.",
+    "The Node worker used by arm B is an isolation boundary for measurement, not a security boundary.",
+    "No dollar figure here is billed. Costs derived from these tokens use list prices and say so."
+  ]
+}

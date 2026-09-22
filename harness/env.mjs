@@ -27,7 +27,7 @@ export const EXCLUDED = {
  * nothing, because the second turn follows the first within seconds, and it makes
  * every figure reproducible on any credential.
  */
-export function armEnv(arm, vars = {}) {
+export function armEnv(arm, vars = {}, configDir = `/tmp/cml-cfg-${arm}`) {
   if (!process.env.CLAUDE_CODE_OAUTH_TOKEN && !process.env.ANTHROPIC_API_KEY) {
     throw new Error(
       'No credential. Run `claude setup-token`, save it to ~/.codemode-lab-token, ' +
@@ -38,8 +38,9 @@ export function armEnv(arm, vars = {}) {
   const env = {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
-    // Each arm gets its own config dir so no state leaks between them.
-    CLAUDE_CONFIG_DIR: `/tmp/cml-cfg-${arm}`,
+    // Each run gets its own config dir so no state leaks between arms or between
+    // repetitions. run.mjs makes a fresh one per run and deletes it afterwards.
+    CLAUDE_CONFIG_DIR: configDir,
     // Belt to alwaysLoad's braces: tool search would defer definitions out of
     // context and shrink the very number being measured.
     ENABLE_TOOL_SEARCH: 'false',

@@ -1,0 +1,1965 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "runId": "2026-09-21T19-48-37-498Z",
+    "model": "claude-opus-5",
+    "effort": "low",
+    "startedAt": "2026-09-21T19:58:13.832Z",
+    "sweepSchemaVersion": 1,
+    "reps": 1
+  },
+  "prices": {
+    "asOf": "2026-06-24",
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "cacheWrite5m": 1.25,
+    "cacheRead": 0.1,
+    "label": "list-price equivalent of billed tokens, not a cost that was paid"
+  },
+  "tasks": [
+    {
+      "task": "one-big-payload",
+      "prediction": "code mode",
+      "reps": 1,
+      "meta": null,
+      "arms": {
+        "floor": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 0,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "ungraded": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1415,
+            "min": 1415,
+            "max": 1415
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 1415,
+            "min": 1415,
+            "max": 1415
+          },
+          "output": {
+            "n": 1,
+            "median": 1609,
+            "min": 1609,
+            "max": 1609
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.042884,
+            "min": 0.042884,
+            "max": 0.042884
+          },
+          "ms": {
+            "n": 1,
+            "median": 18912,
+            "min": 18912,
+            "max": 18912
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "no-data": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 26179,
+            "min": 26179,
+            "max": 26179
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 26179,
+            "min": 26179,
+            "max": 26179
+          },
+          "output": {
+            "n": 1,
+            "median": 1664,
+            "min": 1664,
+            "max": 1664
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.168059,
+            "min": 0.168059,
+            "max": 0.168059
+          },
+          "ms": {
+            "n": 1,
+            "median": 31441,
+            "min": 31441,
+            "max": 31441
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "no-data": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1015,
+            "min": 1015,
+            "max": 1015
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 31582,
+            "min": 31582,
+            "max": 31582
+          },
+          "output": {
+            "n": 1,
+            "median": 2089,
+            "min": 2089,
+            "max": 2089
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 25159,
+            "min": 25159,
+            "max": 25159
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 5408,
+            "min": 5408,
+            "max": 5408
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.0992435,
+            "min": 0.0992435,
+            "max": 0.0992435
+          },
+          "ms": {
+            "n": 1,
+            "median": 69731,
+            "min": 69731,
+            "max": 69731
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 8879,
+            "min": 8879,
+            "max": 8879
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 8879,
+            "min": 8879,
+            "max": 8879
+          },
+          "output": {
+            "n": 1,
+            "median": 935,
+            "min": 935,
+            "max": 935
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.063334,
+            "min": 0.063334,
+            "max": 0.063334
+          },
+          "ms": {
+            "n": 1,
+            "median": 22697,
+            "min": 22697,
+            "max": 22697
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 3,
+            "min": 3,
+            "max": 3
+          },
+          "calls": {
+            "n": 1,
+            "median": 3,
+            "min": 3,
+            "max": 3
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1007,
+            "min": 1007,
+            "max": 1007
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 9012,
+            "min": 9012,
+            "max": 9012
+          },
+          "output": {
+            "n": 1,
+            "median": 1017,
+            "min": 1017,
+            "max": 1017
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 5232,
+            "min": 5232,
+            "max": 5232
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 2773,
+            "min": 2773,
+            "max": 2773
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.04595125,
+            "min": 0.04595125,
+            "max": 0.04595125
+          },
+          "ms": {
+            "n": 1,
+            "median": 76666,
+            "min": 76666,
+            "max": 76666
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 6,
+            "min": 6,
+            "max": 6
+          },
+          "calls": {
+            "n": 1,
+            "median": 6,
+            "min": 6,
+            "max": 6
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": true
+        }
+      },
+      "pairs": {
+        "B-uncached vs A-uncached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 0.37685574708882,
+            "min": 0.37685574708882,
+            "max": 0.37685574708882
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 0.3391649795637725,
+            "min": 0.3391649795637725,
+            "max": 0.3391649795637725
+          },
+          "answers": {
+            "bothCorrect": 0,
+            "codeOnly": 1,
+            "directOnly": 0,
+            "neither": 0
+          }
+        },
+        "B-cached vs A-cached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 0.4630152100641352,
+            "min": 0.4630152100641352,
+            "max": 0.4630152100641352
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 0.2853524159331265,
+            "min": 0.2853524159331265,
+            "max": 0.2853524159331265
+          },
+          "answers": {
+            "bothCorrect": 0,
+            "codeOnly": 1,
+            "directOnly": 0,
+            "neither": 0
+          }
+        }
+      },
+      "verdicts": {
+        "inputUncached": {
+          "cheaper": "code mode",
+          "held": true,
+          "margin": 0.6608350204362274,
+          "overlaps": false
+        },
+        "listPriceUncached": {
+          "cheaper": "code mode",
+          "held": true,
+          "margin": 0.6231442529111799,
+          "overlaps": false
+        },
+        "listPriceCached": {
+          "cheaper": "code mode",
+          "held": true,
+          "margin": 0.5369847899358648,
+          "overlaps": false
+        }
+      },
+      "memoryControl": null,
+      "definitionTax": null
+    },
+    {
+      "task": "outline-leaves",
+      "prediction": "direct",
+      "reps": 1,
+      "meta": null,
+      "arms": {
+        "floor": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 0,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "ungraded": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1399,
+            "min": 1399,
+            "max": 1399
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 1399,
+            "min": 1399,
+            "max": 1399
+          },
+          "output": {
+            "n": 1,
+            "median": 291,
+            "min": 291,
+            "max": 291
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.00999,
+            "min": 0.00999,
+            "max": 0.00999
+          },
+          "ms": {
+            "n": 1,
+            "median": 5672,
+            "min": 5672,
+            "max": 5672
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 5665,
+            "min": 5665,
+            "max": 5665
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 5665,
+            "min": 5665,
+            "max": 5665
+          },
+          "output": {
+            "n": 1,
+            "median": 135,
+            "min": 135,
+            "max": 135
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.02738,
+            "min": 0.02738,
+            "max": 0.02738
+          },
+          "ms": {
+            "n": 1,
+            "median": 5982,
+            "min": 5982,
+            "max": 5982
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 994,
+            "min": 994,
+            "max": 994
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 5661,
+            "min": 5661,
+            "max": 5661
+          },
+          "output": {
+            "n": 1,
+            "median": 139,
+            "min": 139,
+            "max": 139
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 2824,
+            "min": 2824,
+            "max": 2824
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 1843,
+            "min": 1843,
+            "max": 1843
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.01697575,
+            "min": 0.01697575,
+            "max": 0.01697575
+          },
+          "ms": {
+            "n": 1,
+            "median": 7530,
+            "min": 7530,
+            "max": 7530
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 5860,
+            "min": 5860,
+            "max": 5860
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 5860,
+            "min": 5860,
+            "max": 5860
+          },
+          "output": {
+            "n": 1,
+            "median": 265,
+            "min": 265,
+            "max": 265
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.031585,
+            "min": 0.031585,
+            "max": 0.031585
+          },
+          "ms": {
+            "n": 1,
+            "median": 6494,
+            "min": 6494,
+            "max": 6494
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 2,
+            "min": 2,
+            "max": 2
+          },
+          "calls": {
+            "n": 1,
+            "median": 2,
+            "min": 2,
+            "max": 2
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 996,
+            "min": 996,
+            "max": 996
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 5870,
+            "min": 5870,
+            "max": 5870
+          },
+          "output": {
+            "n": 1,
+            "median": 263,
+            "min": 263,
+            "max": 263
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 2702,
+            "min": 2702,
+            "max": 2702
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 2172,
+            "min": 2172,
+            "max": 2172
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.022121000000000002,
+            "min": 0.022121000000000002,
+            "max": 0.022121000000000002
+          },
+          "ms": {
+            "n": 1,
+            "median": 5748,
+            "min": 5748,
+            "max": 5748
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 4,
+            "min": 4,
+            "max": 4
+          },
+          "calls": {
+            "n": 1,
+            "median": 4,
+            "min": 4,
+            "max": 4
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": true
+        }
+      },
+      "pairs": {
+        "B-uncached vs A-uncached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 1.1535792549306063,
+            "min": 1.1535792549306063,
+            "max": 1.1535792549306063
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 1.0344218887908208,
+            "min": 1.0344218887908208,
+            "max": 1.0344218887908208
+          },
+          "answers": {
+            "bothCorrect": 1,
+            "codeOnly": 0,
+            "directOnly": 0,
+            "neither": 0
+          }
+        },
+        "B-cached vs A-cached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 1.3030941195528916,
+            "min": 1.3030941195528916,
+            "max": 1.3030941195528916
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 1.0369192722133898,
+            "min": 1.0369192722133898,
+            "max": 1.0369192722133898
+          },
+          "answers": {
+            "bothCorrect": 1,
+            "codeOnly": 0,
+            "directOnly": 0,
+            "neither": 0
+          }
+        }
+      },
+      "verdicts": {
+        "inputUncached": {
+          "cheaper": "direct",
+          "held": true,
+          "margin": 0.034421888790820754,
+          "overlaps": false
+        },
+        "listPriceUncached": {
+          "cheaper": "direct",
+          "held": true,
+          "margin": 0.1535792549306063,
+          "overlaps": false
+        },
+        "listPriceCached": {
+          "cheaper": "direct",
+          "held": true,
+          "margin": 0.30309411955289156,
+          "overlaps": false
+        }
+      },
+      "memoryControl": null,
+      "definitionTax": null
+    },
+    {
+      "task": "structure-rank",
+      "prediction": "direct",
+      "reps": 1,
+      "meta": null,
+      "arms": {
+        "floor": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 0,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "ungraded": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1466,
+            "min": 1466,
+            "max": 1466
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 1466,
+            "min": 1466,
+            "max": 1466
+          },
+          "output": {
+            "n": 1,
+            "median": 852,
+            "min": 852,
+            "max": 852
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.024277999999999997,
+            "min": 0.024277999999999997,
+            "max": 0.024277999999999997
+          },
+          "ms": {
+            "n": 1,
+            "median": 10879,
+            "min": 10879,
+            "max": 10879
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 8133,
+            "min": 8133,
+            "max": 8133
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 8133,
+            "min": 8133,
+            "max": 8133
+          },
+          "output": {
+            "n": 1,
+            "median": 465,
+            "min": 465,
+            "max": 465
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.047917999999999995,
+            "min": 0.047917999999999995,
+            "max": 0.047917999999999995
+          },
+          "ms": {
+            "n": 1,
+            "median": 9134,
+            "min": 9134,
+            "max": 9134
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1027,
+            "min": 1027,
+            "max": 1027
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 8135,
+            "min": 8135,
+            "max": 8135
+          },
+          "output": {
+            "n": 1,
+            "median": 466,
+            "min": 466,
+            "max": 466
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 2858,
+            "min": 2858,
+            "max": 2858
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 4250,
+            "min": 4250,
+            "max": 4250
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.0404245,
+            "min": 0.0404245,
+            "max": 0.0404245
+          },
+          "ms": {
+            "n": 1,
+            "median": 8685,
+            "min": 8685,
+            "max": 8685
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 8275,
+            "min": 8275,
+            "max": 8275
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 8275,
+            "min": 8275,
+            "max": 8275
+          },
+          "output": {
+            "n": 1,
+            "median": 541,
+            "min": 541,
+            "max": 541
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.050527999999999997,
+            "min": 0.050527999999999997,
+            "max": 0.050527999999999997
+          },
+          "ms": {
+            "n": 1,
+            "median": 12152,
+            "min": 12152,
+            "max": 12152
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 3,
+            "min": 3,
+            "max": 3
+          },
+          "calls": {
+            "n": 1,
+            "median": 6,
+            "min": 6,
+            "max": 6
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1031,
+            "min": 1031,
+            "max": 1031
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 8283,
+            "min": 8283,
+            "max": 8283
+          },
+          "output": {
+            "n": 1,
+            "median": 531,
+            "min": 531,
+            "max": 531
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 5765,
+            "min": 5765,
+            "max": 5765
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 1487,
+            "min": 1487,
+            "max": 1487
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.02625425,
+            "min": 0.02625425,
+            "max": 0.02625425
+          },
+          "ms": {
+            "n": 1,
+            "median": 16331,
+            "min": 16331,
+            "max": 16331
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 6,
+            "min": 6,
+            "max": 6
+          },
+          "calls": {
+            "n": 1,
+            "median": 12,
+            "min": 12,
+            "max": 12
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": true
+        }
+      },
+      "pairs": {
+        "B-uncached vs A-uncached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 1.0544680495847072,
+            "min": 1.0544680495847072,
+            "max": 1.0544680495847072
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 1.0174597319562277,
+            "min": 1.0174597319562277,
+            "max": 1.0174597319562277
+          },
+          "answers": {
+            "bothCorrect": 1,
+            "codeOnly": 0,
+            "directOnly": 0,
+            "neither": 0
+          }
+        },
+        "B-cached vs A-cached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 0.6494638152605474,
+            "min": 0.6494638152605474,
+            "max": 0.6494638152605474
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 1.0181929932390903,
+            "min": 1.0181929932390903,
+            "max": 1.0181929932390903
+          },
+          "answers": {
+            "bothCorrect": 1,
+            "codeOnly": 0,
+            "directOnly": 0,
+            "neither": 0
+          }
+        }
+      },
+      "verdicts": {
+        "inputUncached": {
+          "cheaper": "direct",
+          "held": true,
+          "margin": 0.017459731956227742,
+          "overlaps": false
+        },
+        "listPriceUncached": {
+          "cheaper": "direct",
+          "held": true,
+          "margin": 0.05446804958470719,
+          "overlaps": false
+        },
+        "listPriceCached": {
+          "cheaper": "code mode",
+          "held": false,
+          "margin": 0.3505361847394526,
+          "overlaps": false
+        }
+      },
+      "memoryControl": null,
+      "definitionTax": null
+    },
+    {
+      "task": "table-heavy-page",
+      "prediction": "code mode",
+      "reps": 1,
+      "meta": null,
+      "arms": {
+        "floor": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 0,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "ungraded": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1421,
+            "min": 1421,
+            "max": 1421
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 1421,
+            "min": 1421,
+            "max": 1421
+          },
+          "output": {
+            "n": 1,
+            "median": 1935,
+            "min": 1935,
+            "max": 1935
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.051168000000000005,
+            "min": 0.051168000000000005,
+            "max": 0.051168000000000005
+          },
+          "ms": {
+            "n": 1,
+            "median": 21923,
+            "min": 21923,
+            "max": 21923
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "no-data": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 53416,
+            "min": 53416,
+            "max": 53416
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 53416,
+            "min": 53416,
+            "max": 53416
+          },
+          "output": {
+            "n": 1,
+            "median": 3011,
+            "min": 3011,
+            "max": 3011
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.338023,
+            "min": 0.338023,
+            "max": 0.338023
+          },
+          "ms": {
+            "n": 1,
+            "median": 56571,
+            "min": 56571,
+            "max": 56571
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "no-data": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1017,
+            "min": 1017,
+            "max": 1017
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 30780,
+            "min": 30780,
+            "max": 30780
+          },
+          "output": {
+            "n": 1,
+            "median": 1786,
+            "min": 1786,
+            "max": 1786
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 24231,
+            "min": 24231,
+            "max": 24231
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 5532,
+            "min": 5532,
+            "max": 5532
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.0921135,
+            "min": 0.0921135,
+            "max": 0.0921135
+          },
+          "ms": {
+            "n": 1,
+            "median": 40708,
+            "min": 40708,
+            "max": 40708
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 8788,
+            "min": 8788,
+            "max": 8788
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 8788,
+            "min": 8788,
+            "max": 8788
+          },
+          "output": {
+            "n": 1,
+            "median": 974,
+            "min": 974,
+            "max": 974
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.063978,
+            "min": 0.063978,
+            "max": 0.063978
+          },
+          "ms": {
+            "n": 1,
+            "median": 37570,
+            "min": 37570,
+            "max": 37570
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 3,
+            "min": 3,
+            "max": 3
+          },
+          "calls": {
+            "n": 1,
+            "median": 5,
+            "min": 5,
+            "max": 5
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1009,
+            "min": 1009,
+            "max": 1009
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 6245,
+            "min": 6245,
+            "max": 6245
+          },
+          "output": {
+            "n": 1,
+            "median": 803,
+            "min": 803,
+            "max": 803
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 3772,
+            "min": 3772,
+            "max": 3772
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 1464,
+            "min": 1464,
+            "max": 1464
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.031824,
+            "min": 0.031824,
+            "max": 0.031824
+          },
+          "ms": {
+            "n": 1,
+            "median": 26934,
+            "min": 26934,
+            "max": 26934
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 5,
+            "min": 5,
+            "max": 5
+          },
+          "calls": {
+            "n": 1,
+            "median": 9,
+            "min": 9,
+            "max": 9
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": true
+        }
+      },
+      "pairs": {
+        "B-uncached vs A-uncached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 0.18927114427124778,
+            "min": 0.18927114427124778,
+            "max": 0.18927114427124778
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 0.1645199940092856,
+            "min": 0.1645199940092856,
+            "max": 0.1645199940092856
+          },
+          "answers": {
+            "bothCorrect": 0,
+            "codeOnly": 1,
+            "directOnly": 0,
+            "neither": 0
+          }
+        },
+        "B-cached vs A-cached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 0.3454868178931427,
+            "min": 0.3454868178931427,
+            "max": 0.3454868178931427
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 0.20289148797920728,
+            "min": 0.20289148797920728,
+            "max": 0.20289148797920728
+          },
+          "answers": {
+            "bothCorrect": 0,
+            "codeOnly": 1,
+            "directOnly": 0,
+            "neither": 0
+          }
+        }
+      },
+      "verdicts": {
+        "inputUncached": {
+          "cheaper": "code mode",
+          "held": true,
+          "margin": 0.8354800059907144,
+          "overlaps": false
+        },
+        "listPriceUncached": {
+          "cheaper": "code mode",
+          "held": true,
+          "margin": 0.8107288557287522,
+          "overlaps": false
+        },
+        "listPriceCached": {
+          "cheaper": "code mode",
+          "held": true,
+          "margin": 0.6545131821068573,
+          "overlaps": false
+        }
+      },
+      "memoryControl": null,
+      "definitionTax": null
+    },
+    {
+      "task": "topic-overlap",
+      "prediction": "uncertain",
+      "reps": 1,
+      "meta": null,
+      "arms": {
+        "floor": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 0,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "ungraded": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1488,
+            "min": 1488,
+            "max": 1488
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 1488,
+            "min": 1488,
+            "max": 1488
+          },
+          "output": {
+            "n": 1,
+            "median": 456,
+            "min": 456,
+            "max": 456
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.014448,
+            "min": 0.014448,
+            "max": 0.014448
+          },
+          "ms": {
+            "n": 1,
+            "median": 7746,
+            "min": 7746,
+            "max": 7746
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "wrong": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 11085,
+            "min": 11085,
+            "max": 11085
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 11085,
+            "min": 11085,
+            "max": 11085
+          },
+          "output": {
+            "n": 1,
+            "median": 833,
+            "min": 833,
+            "max": 833
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.071858,
+            "min": 0.071858,
+            "max": 0.071858
+          },
+          "ms": {
+            "n": 1,
+            "median": 12745,
+            "min": 12745,
+            "max": 12745
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "A-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 0,
+          "passAll": false,
+          "classes": {
+            "wrong": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1037,
+            "min": 1037,
+            "max": 1037
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 11083,
+            "min": 11083,
+            "max": 11083
+          },
+          "output": {
+            "n": 1,
+            "median": 1153,
+            "min": 1153,
+            "max": 1153
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 2870,
+            "min": 2870,
+            "max": 2870
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 7176,
+            "min": 7176,
+            "max": 7176
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.075883,
+            "min": 0.075883,
+            "max": 0.075883
+          },
+          "ms": {
+            "n": 1,
+            "median": 16806,
+            "min": 16806,
+            "max": 16806
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": null,
+          "calls": null,
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-uncached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 9600,
+            "min": 9600,
+            "max": 9600
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 9600,
+            "min": 9600,
+            "max": 9600
+          },
+          "output": {
+            "n": 1,
+            "median": 1348,
+            "min": 1348,
+            "max": 1348
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 0,
+            "min": 0,
+            "max": 0
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.077308,
+            "min": 0.077308,
+            "max": 0.077308
+          },
+          "ms": {
+            "n": 1,
+            "median": 20218,
+            "min": 20218,
+            "max": 20218
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 3,
+            "min": 3,
+            "max": 3
+          },
+          "calls": {
+            "n": 1,
+            "median": 9,
+            "min": 9,
+            "max": 9
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": false
+        },
+        "B-cached": {
+          "runs": 1,
+          "discarded": 0,
+          "graded": 1,
+          "pass": 1,
+          "passAll": true,
+          "classes": {
+            "correct": 1
+          },
+          "input": {
+            "n": 1,
+            "median": 1041,
+            "min": 1041,
+            "max": 1041
+          },
+          "promptTokens": {
+            "n": 1,
+            "median": 9521,
+            "min": 9521,
+            "max": 9521
+          },
+          "output": {
+            "n": 1,
+            "median": 1335,
+            "min": 1335,
+            "max": 1335
+          },
+          "cacheRead": {
+            "n": 1,
+            "median": 6176,
+            "min": 6176,
+            "max": 6176
+          },
+          "cacheCreation": {
+            "n": 1,
+            "median": 2304,
+            "min": 2304,
+            "max": 2304
+          },
+          "listPriceUsd": {
+            "n": 1,
+            "median": 0.051656,
+            "min": 0.051656,
+            "max": 0.051656
+          },
+          "ms": {
+            "n": 1,
+            "median": 24722,
+            "min": 24722,
+            "max": 24722
+          },
+          "turns": null,
+          "peakPrompt": null,
+          "spilledResults": null,
+          "programs": {
+            "n": 1,
+            "median": 6,
+            "min": 6,
+            "max": 6
+          },
+          "calls": {
+            "n": 1,
+            "median": 18,
+            "min": 18,
+            "max": 18
+          },
+          "uniqueCalls": null,
+          "boundaryUnreliable": true
+        }
+      },
+      "pairs": {
+        "B-uncached vs A-uncached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 1.075844025717387,
+            "min": 1.075844025717387,
+            "max": 1.075844025717387
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 0.8660351826792964,
+            "min": 0.8660351826792964,
+            "max": 0.8660351826792964
+          },
+          "answers": {
+            "bothCorrect": 0,
+            "codeOnly": 1,
+            "directOnly": 0,
+            "neither": 0
+          }
+        },
+        "B-cached vs A-cached": {
+          "reps": 1,
+          "usdRatio": {
+            "n": 1,
+            "median": 0.680732179803118,
+            "min": 0.680732179803118,
+            "max": 0.680732179803118
+          },
+          "promptRatio": {
+            "n": 1,
+            "median": 0.8590634304791122,
+            "min": 0.8590634304791122,
+            "max": 0.8590634304791122
+          },
+          "answers": {
+            "bothCorrect": 0,
+            "codeOnly": 1,
+            "directOnly": 0,
+            "neither": 0
+          }
+        }
+      },
+      "verdicts": {
+        "inputUncached": {
+          "cheaper": "code mode",
+          "held": null,
+          "margin": 0.13396481732070364,
+          "overlaps": false
+        },
+        "listPriceUncached": {
+          "cheaper": "direct",
+          "held": null,
+          "margin": 0.07584402571738691,
+          "overlaps": false
+        },
+        "listPriceCached": {
+          "cheaper": "code mode",
+          "held": null,
+          "margin": 0.31926782019688205,
+          "overlaps": false
+        }
+      },
+      "memoryControl": null,
+      "definitionTax": null
+    }
+  ]
+}
