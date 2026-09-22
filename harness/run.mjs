@@ -16,6 +16,7 @@
  *   --max-usd <n>                 per-arm budget cap, default 2
  *   --raw-max-usd <n>             budget cap for A-raw, default 15
  *   --raw-max-output-tokens <n>   MCP output limit for A-raw, default 1000000
+ *   --files-max-turns <n>         turn cap for A-files, default 40
  *   --no-latest                   keep results/latest.json as it is. For a check run:
  *                                 the project page reads latest.json through its summary
  *
@@ -26,6 +27,7 @@
  * parallel arms would also contend for the same remote MCP servers, which are other
  * people's free infrastructure.
  */
+import { execFileSync } from 'node:child_process'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
@@ -40,6 +42,7 @@ import {
 } from './arms.mjs'
 import { buildCodeModeServer } from './codemode-tool.mjs'
 import { runOneArm, sdkVersion, taskSummary } from './core.mjs'
+import { rawProxyServer } from './raw-proxy.mjs'
 import { credentialKind } from './env.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -59,6 +62,21 @@ function list(value) {
         .map((s) => s.trim())
         .filter(Boolean)
     : null
+}
+
+/**
+ * The commit of this repository the sweep ran from, and whether the tree had changes.
+ *
+ * A sweep file outlives the harness that wrote it. Without the commit, a reader
+ * cannot tell which version of the arms produced a number.
+ */
+function labCommit() {
+  try {
+    const git = (...a) => execFileSync('git', ['-C', ROOT, ...a], { encoding: 'utf8' }).trim()
+    return { commit: git('rev-parse', 'HEAD'), dirty: git('status', '--porcelain') !== '' }
+  } catch {
+    return { commit: 'unknown', dirty: null }
+  }
 }
 
 /** The arms a task runs: the default set plus what the task names, in a fixed order. */
@@ -116,12 +134,29 @@ async function sweepTask(taskId, cfg) {
   const withPrompt = { ...task, systemPrompt }
   const records = []
 
+  // A-raw reaches the same servers through a pass-through that lifts Claude Code's
+  // persist-to-disk threshold. See raw-proxy.mjs.
+  const rawPicked = async () =>
+    Object.fromEntries(
+      await Promise.all(
+        Object.keys(allow).map(async (id) => [
+          id,
+          await rawProxyServer({
+            id,
+            url: SERVERS[id].url,
+            headers: SERVERS[id].headers,
+            allowed: allow[id],
+          }),
+        ]),
+      ),
+    )
+
   for (const arm of armsFor(task, cfg.arms)) {
     records.push(
       await runOneArm({
         arm,
         task: withPrompt,
-        picked,
+        picked: arm === 'A-raw' ? await rawPicked() : picked,
         cfg,
         disallowed,
         codemode,
@@ -157,11 +192,12 @@ async function main() {
     maxBudgetUsd: Number(arg('max-usd', '2')),
     rawMaxBudgetUsd: Number(arg('raw-max-usd', '15')),
     rawMaxOutputTokens: Number(arg('raw-max-output-tokens', '1000000')),
+    filesMaxTurns: Number(arg('files-max-turns', '40')),
     arms: list(arg('arms')),
   }
 
   const ids = only ?? (await listTasks(TASKS))
-  const versions = sdkVersion()
+  const versions = { ...sdkVersion(), lab: labCommit() }
   const startedAt = new Date().toISOString()
   const runId = startedAt.replace(/[:.]/g, '-')
 

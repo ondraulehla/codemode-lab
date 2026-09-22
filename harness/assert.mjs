@@ -77,13 +77,18 @@ export function checkArm({ arm, result, initTools, expectedTools, cached, mayNot
 
   const u = totalUsage(result)
 
-  // Assert the OUTCOME, never trust that the environment variable fired.
-  if (!cached && (u.cacheRead > 0 || u.cacheCreation > 0)) {
-    throw new AssertionFailed(
-      'uncached',
-      `arm ${arm} should carry no cache but read ${u.cacheRead} and created ${u.cacheCreation}`,
-    )
-  }
+  // Check the OUTCOME, never trust that the environment variable fired.
+  //
+  // This used to throw. On 2026-09-22 one Sonnet run of an uncached arm read 7,692
+  // cache tokens and wrote 3,887, the run was discarded, and the same arm on the
+  // same task ran clean minutes later. A discard spends the run and keeps nothing.
+  // A leak is now recorded and flagged. The summary compares arms on every token
+  // read, cached or not, so a leak cannot shrink a figure there, and list price
+  // bills the leaked tokens as what they were.
+  const cacheLeak =
+    !cached && (u.cacheRead > 0 || u.cacheCreation > 0)
+      ? { read: u.cacheRead, creation: u.cacheCreation }
+      : null
   if (cached && u.cacheRead === 0) {
     throw new AssertionFailed('cached', `arm ${arm} should read from cache but cache_read was 0`)
   }
@@ -97,7 +102,7 @@ export function checkArm({ arm, result, initTools, expectedTools, cached, mayNot
     )
   }
 
-  return { ...u, outcome: 'completed', usageTrustworthy: true }
+  return { ...u, outcome: 'completed', usageTrustworthy: true, cacheLeak }
 }
 
 /**

@@ -11,7 +11,7 @@
   "predictions": {
     "recorded": "2026-09-22, before the first run of A-files and A-raw",
     "B-uncached vs A-raw": "code mode reads at least ten times fewer input tokens. Whether A-raw answers correctly is uncertain.",
-    "B-uncached vs A-files": "code mode is cheaper at list price. Whether A-files answers correctly is uncertain."
+    "B-cached vs A-files": "code mode is cheaper at list price. Whether A-files answers correctly is uncertain. Paired with B-cached since 2026-09-22, before any full run: Claude Code caches whenever Read and Grep are loaded, so A-files is a cached arm. That makes the test harder for code mode, not easier."
   },
   "timeoutMs": 180000,
   "mayNotComplete": ["A-uncached", "A-cached", "A-files", "A-raw"],

@@ -102,14 +102,28 @@ list-price equivalents and a verdict per metric. The project page reads the summ
 | `floor`      | none                                      | off     | The baseline for the definition tax, and the memory control.            |
 | `A-uncached` | the task's MCP tools                      | off     | Direct tool calling, the way every published comparison measures it.    |
 | `A-cached`   | the same                                  | on      | Direct tool calling, the way a competent production user would ship it. |
-| `A-files`    | the task's MCP tools, plus Read and Grep  | off     | The direct arm a real session is: it can open a spilled result.         |
+| `A-files`    | the task's MCP tools, plus Read and Grep  | on      | The direct arm a real session is: it can open a spilled result.         |
 | `A-raw`      | the task's MCP tools, output limit raised | off     | The payload lands in the window, so its cost is counted.                |
 | `B-uncached` | one `run_code` tool                       | off     | Code mode.                                                              |
 | `B-cached`   | one `run_code` tool                       | on      | Code mode, cached.                                                      |
 
 Every task runs `floor`, the two `A` arms and the two `B` arms. `A-files` and
-`A-raw` run only on tasks that name them in `extraArms`, which today are the two
-large ones.
+`A-raw` run only on tasks that name them in `extraArms`: both on `one-big-payload`,
+and `A-files` alone on `table-heavy-page`.
+
+`A-files` is a cached arm, and it is compared with `B-cached`. Claude Code caches
+whenever Read and Grep are loaded, whatever `DISABLE_PROMPT_CACHING` says: on
+2026-09-22 it wrote 4,209 cache tokens on its first request with the variable set.
+Its turn cap is 40, not 12, because reading a 383 KiB file takes more turns than
+that: at 12 the first attempt ran out before it answered.
+
+`A-raw` reaches the server through `raw-proxy.mjs`, a pass-through that declares
+`_meta["anthropic/maxResultSizeChars"]` at the documented ceiling of 500,000
+characters. Raising `MAX_MCP_OUTPUT_TOKENS` alone was not enough: Claude Code still
+wrote the result to a file. With the proxy, the 392,601 character result landed in
+the window, 165,720 tokens on the second request. No setting lets a larger result
+in, which is why `table-heavy-page`, whose largest dump is 700,150 characters, has
+no `A-raw` arm.
 
 **Both sides declare the same tools.** The direct arms have every tool the task does
 not allow removed from their context with `disallowedTools`, and denied by name on

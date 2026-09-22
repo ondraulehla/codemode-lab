@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 2,
+  "runId": "2026-09-22T19-17-28-798Z",
+  "startedAt": "2026-09-22T19:17:28.798Z",
+  "finishedAt": "2026-09-22T19:19:37.918Z",
+  "credential": "subscription-oauth",
+  "model": "claude-sonnet-5",
+  "effort": "low",
+  "cacheTtl": "5m (FORCE_PROMPT_CACHING_5M)",
+  "config": {
+    "reps": 1,
+    "model": "claude-sonnet-5",
+    "effort": "low",
+    "maxTurns": 12,
+    "maxBudgetUsd": 2,
+    "rawMaxBudgetUsd": 15,
+    "rawMaxOutputTokens": 1000000,
+    "filesMaxTurns": 40,
+    "arms": [
+      "A-files",
+      "A-raw"
+    ]
+  },
+  "versions": {
+    "claudeCode": "2.1.278",
+    "commit": "809c980662e3525645594dc8b74f78c38a348db1",
+    "buildDate": "2026-09-19T01:22:08Z",
+    "sdk": "0.3.278"
+  },
+  "sweeps": [
+    {
+      "rep": 0,
+      "task": "one-big-payload",
+      "question": "DeepWiki returns the documentation of modelcontextprotocol/servers as one markdown dump. The dump is a series of pages. Every page starts with a line of the form '# Page: <title>'. Count only fenced blocks that hold code, so skip every fenced block opened with three backticks and the word mermaid. Find the page that holds the most code blocks. Give its exact title, and copy the first line of that page that starts with two hash marks and a space.",
+      "expectCodeModeWins": true,
+      "predictionUncertain": false,
+      "surfaceBytes": 498,
+      "surfaceSource": "/**\n * Generated from the live tools/list of \"deepwiki\".\n * 1 tool. Do not edit.\n *\n * Every function here runs INSIDE the sandbox and calls OUT over the bridge.\n * Results you do not return never leave the sandbox, which is the point.\n */\ndeclare namespace deepwiki {\n  /**\n   * View documentation about a GitHub repository.\n   */\n  export function read_wiki_contents(args: {\n    /** GitHub repository in owner/repo format (e.g. \"facebook/react\"). */\n    repoName: string\n  }): Promise<string>\n\n}\n",
+      "serverInstructionsBytes": 3129,
+      "deniedTools": [
+        "mcp__deepwiki__ask_wiki_question",
+        "mcp__deepwiki__read_wiki_structure"
+      ],
+      "memoryControl": {
+        "graded": true,
+        "pass": false
+      },
+      "definitionTax": {
+        "direct": null,
+        "codemode": null,
+        "note": "First request minus the floor arm first request, both uncached, counted by the API. It holds the tool definitions and any server instructions the client adds."
+      },
+      "extraInputOverFloor": {
+        "direct": null,
+        "codemode": null,
+        "note": "All input over the floor arm, across every turn: tool results, resent definitions and the arm reading its own earlier output. This is NOT the definition tax."
+      },
+      "arms": [
+        {
+          "arm": "floor",
+          "ok": true,
+          "usage": {
+            "input": 1529,
+            "output": 127,
+            "cacheRead": 0,
+            "cacheCreation": 0,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 999,
+                "output": 22,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-sonnet-5": {
+                "input": 530,
+                "output": 105,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true,
+            "cacheLeak": null
+          },
+          "grade": {
+            "graded": true,
+            "pass": false,
+            "missing": [
+              "Filesystem Tools Reference",
+              "Tool Categories and Organization"
+            ]
+          },
+          "answerClass": "wrong",
+          "answer": "I don't have access to tools (e.g., web/document fetch) in this environment to retrieve the DeepWiki markdown dump for modelcontextprotocol/servers, so I can't count code blocks per page or extract the exact title/heading. I have no browsing or file-retrieval capability available here to complete this task accurately.",
+          "ms": 3575,
+          "apiMs": 2871,
+          "numTurns": 1,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.003219,
+          "tools": [],
+          "turns": {
+            "turns": 1,
+            "turn1Prompt": 530,
+            "peakPrompt": 530,
+            "toolCalls": {},
+            "toolResults": 0,
+            "toolResultBytes": 0,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 530,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            ]
+          },
+          "boundary": null,
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "I don't have access to tools (e.g., web/document fetch) in this environment to retrieve the DeepWiki markdown dump for modelcontextprotocol/servers, so I can't count code blocks per page or extract the exact title/heading. I have no browsing or file-retrieval capability available here to complete this task accurately."
+            }
+          ]
+        },
+        {
+          "arm": "A-files",
+          "ok": true,
+          "usage": {
+            "input": 1027,
+            "output": 6907,
+            "cacheRead": 142655,
+            "cacheCreation": 21141,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 999,
+                "output": 15,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-sonnet-5": {
+                "input": 28,
+                "output": 6892,
+                "cacheRead": 142655,
+                "cacheCreation": 21141
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true,
+            "cacheLeak": {
+              "read": 142655,
+              "creation": 21141
+            }
+          },
+          "grade": {
+            "graded": true,
+            "pass": true,
+            "missing": []
+          },
+          "answerClass": "correct",
+          "answer": "The page **\"Filesystem Tools Reference\"** has the most code blocks (19 non-mermaid fenced code blocks — 17 TypeScript + 2 unlabeled), more than any other page in the dump.\n\nIts first \"## \" line is:\n\n**## Tool Categories and Organization**",
+          "ms": 72662,
+          "apiMs": 64916,
+          "numTurns": 14,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.1514335,
+          "tools": [
+            "Grep",
+            "Read",
+            "mcp__deepwiki__read_wiki_contents"
+          ],
+          "turns": {
+            "turns": 14,
+            "turn1Prompt": 4211,
+            "peakPrompt": 21143,
+            "toolCalls": {
+              "mcp__deepwiki__read_wiki_contents": 1,
+              "Grep": 11,
+              "Read": 1
+            },
+            "toolResults": 13,
+            "toolResultBytes": 16892,
+            "spilledResults": 1,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 2,
+                "cacheRead": 0,
+                "cacheCreation": 4209
+              },
+              {
+                "input": 2,
+                "cacheRead": 4209,
+                "cacheCreation": 852
+              },
+              {
+                "input": 2,
+                "cacheRead": 5061,
+                "cacheCreation": 402
+              },
+              {
+                "input": 2,
+                "cacheRead": 5463,
+                "cacheCreation": 676
+              },
+              {
+                "input": 2,
+                "cacheRead": 6139,
+                "cacheCreation": 447
+              },
+              {
+                "input": 2,
+                "cacheRead": 6586,
+                "cacheCreation": 993
+              },
+              {
+                "input": 2,
+                "cacheRead": 7579,
+                "cacheCreation": 4858
+              },
+              {
+                "input": 2,
+                "cacheRead": 12437,
+                "cacheCreation": 2252
+              },
+              {
+                "input": 2,
+                "cacheRead": 14689,
+                "cacheCreation": 466
+              },
+              {
+                "input": 2,
+                "cacheRead": 15155,
+                "cacheCreation": 416
+              },
+              {
+                "input": 2,
+                "cacheRead": 15571,
+                "cacheCreation": 586
+              },
+              {
+                "input": 2,
+                "cacheRead": 16157,
+                "cacheCreation": 434
+              },
+              {
+                "input": 2,
+                "cacheRead": 16591,
+                "cacheCreation": 427
+              },
+              {
+                "input": 2,
+                "cacheRead": 17018,
+                "cacheCreation": 4123
+              }
+            ]
+          },
+          "boundary": null,
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "That match came from a table-of-contents reference, not the actual \"Filesystem Tools Reference\" page itself. Let me find the real page start."
+            },
+            {
+              "role": "assistant",
+              "text": "Now let me get further into the page to find first \"## \" line."
+            },
+            {
+              "role": "assistant",
+              "text": "The page **\"Filesystem Tools Reference\"** has the most code blocks (19 non-mermaid fenced code blocks — 17 TypeScript + 2 unlabeled), more than any other page in the dump.\n\nIts first \"## \" line is:\n\n**## Tool Categories and Organization**"
+            }
+          ]
+        },
+        {
+          "arm": "A-raw",
+          "ok": true,
+          "usage": {
+            "input": 168546,
+            "output": 5168,
+            "cacheRead": 0,
+            "cacheCreation": 0,
+            "ephemeral1h": 0,
+            "ephemeral5m": 0,
+            "byModel": {
+              "claude-haiku-4-5-20251001": {
+                "input": 999,
+                "output": 21,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              "claude-sonnet-5": {
+                "input": 167547,
+                "output": 5147,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "outcome": "completed",
+            "usageTrustworthy": true,
+            "cacheLeak": null
+          },
+          "grade": {
+            "graded": true,
+            "pass": true,
+            "missing": []
+          },
+          "answerClass": "correct",
+          "answer": "**Page title:** Filesystem Tools Reference\n\n**First line starting with \"## \":** `## Tool Categories and Organization`\n\nEvidence: This page contains the highest count of non-mermaid fenced code blocks (18 TypeScript/plain-text schema and example blocks — e.g., `ReadTextFileArgsSchema`, `read_media_file`, `write_file`, `edit_file`, `create_directory`, `list_directory`, output format blocks, `list_directory_with_sizes`, `directory_tree`, `TreeEntry`, `move_file`, `search_files`, `get_file_info`, `list_allowed_directories` output, `CallToolResult`, and two response examples), well above other pages (e.g., \"Advanced Features\" had 4, \"Repository Structure and Package Management\" had 4, \"Client Configuration\" had 15).",
+          "ms": 51221,
+          "apiMs": 47230,
+          "numTurns": 2,
+          "permissionDenials": [],
+          "claudeCodeCostUsd": 0.387668,
+          "tools": [
+            "mcp__deepwiki__read_wiki_contents"
+          ],
+          "turns": {
+            "turns": 2,
+            "turn1Prompt": 1827,
+            "peakPrompt": 165720,
+            "toolCalls": {
+              "mcp__deepwiki__read_wiki_contents": 1
+            },
+            "toolResults": 1,
+            "toolResultBytes": 392601,
+            "spilledResults": 0,
+            "subagentTurns": 0,
+            "perTurn": [
+              {
+                "input": 1827,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              },
+              {
+                "input": 165720,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            ]
+          },
+          "boundary": null,
+          "transcript": [
+            {
+              "role": "assistant",
+              "text": "**Page title:** Filesystem Tools Reference\n\n**First line starting with \"## \":** `## Tool Categories and Organization`\n\nEvidence: This page contains the highest count of non-mermaid fenced code blocks (18 TypeScript/plain-text schema and example blocks — e.g., `ReadTextFileArgsSchema`, `read_media_file`, `write_file`, `edit_file`, `create_directory`, `list_directory`, output format blocks, `list_directory_with_sizes`, `directory_tree`, `TreeEntry`, `move_file`, `search_files`, `get_file_info`, `list_allowed_directories` output, `CallToolResult`, and two response examples), well above other pages (e.g., \"Advanced Features\" had 4, \"Repository Structure and Package Management\" had 4, \"Client Configuration\" had 15)."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "disclosure": [
+    "Every token figure here is what the Anthropic API counted, read from modelUsage on the final result message.",
+    "Per-turn figures are read from each API response and cover the input side only.",
+    "Both arms declare the same tools: the direct arms have every other tool of the server removed.",
+    "Claude Code writes an MCP result over 25,000 tokens to a file. A-uncached and A-cached have no tool to read it; A-files does; A-raw raises the limit.",
+    "The Node worker used by arm B is an isolation boundary for measurement, not a security boundary.",
+    "No dollar figure here is billed. Costs derived from these tokens use list prices and say so."
+  ]
+}

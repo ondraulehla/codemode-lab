@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { query } from '@anthropic-ai/claude-agent-sdk'
 import { UNCACHED_ARMS, armOptions, canReadFiles } from './arms.mjs'
-import { checkArm, AssertionFailed } from './assert.mjs'
+import { checkArm, totalUsage, AssertionFailed } from './assert.mjs'
 import {
   TurnLog,
   answerClass,
@@ -66,17 +66,25 @@ export async function runArm({ options, prompt }) {
   const transcript = []
   const turns = new TurnLog()
 
-  for await (const m of query({ prompt, options })) {
-    turns.push(m)
-    if (m.type === 'system' && m.subtype === 'init') initTools = m.tools ?? []
-    if (m.type === 'assistant' && m.parent_tool_use_id == null) {
-      const text = (m.message?.content ?? [])
-        .filter((c) => c.type === 'text')
-        .map((c) => c.text)
-        .join('')
-      if (text) transcript.push({ role: 'assistant', text })
+  try {
+    for await (const m of query({ prompt, options })) {
+      turns.push(m)
+      if (m.type === 'system' && m.subtype === 'init') initTools = m.tools ?? []
+      if (m.type === 'assistant' && m.parent_tool_use_id == null) {
+        const text = (m.message?.content ?? [])
+          .filter((c) => c.type === 'text')
+          .map((c) => c.text)
+          .join('')
+        if (text) transcript.push({ role: 'assistant', text })
+      }
+      if (m.type === 'result') last = m
     }
-    if (m.type === 'result') last = m
+  } catch (err) {
+    // The SDK yields the error result and then throws, for example when an arm
+    // runs out of turns. The result carries the usage, and an arm that may not
+    // complete must be recorded with it, not discarded. Without a result there is
+    // nothing to record, so the error goes on up.
+    if (!last) throw err
   }
 
   return { result: last, initTools, transcript, turns, ms: Date.now() - started }
@@ -106,6 +114,7 @@ export async function runOneArm({
   const configDir = await mkdtemp(join(tmpdir(), `cml-cfg-${label}-`))
   const workDir = await mkdtemp(join(tmpdir(), `cml-work-${label}-`))
   if (stats) stats.reset()
+  let run = null
 
   try {
     const options = armOptions(arm, {
@@ -117,7 +126,7 @@ export async function runOneArm({
       disallowed,
       codemode,
     })
-    const run = await runArm({ options, prompt })
+    run = await runArm({ options, prompt })
     const usage = checkArm({
       arm: label,
       result: run.result,
@@ -160,9 +169,9 @@ export async function runOneArm({
     }
 
     const outcome =
-      usage.outcome === 'did-not-complete'
+      (usage.outcome === 'did-not-complete'
         ? `DID NOT COMPLETE (${usage.subtype}${usage.usageTrustworthy ? '' : ', usage zeroed'})`
-        : klass.toUpperCase()
+        : klass.toUpperCase()) + (usage.cacheLeak ? ' CACHE-LEAK' : '')
     console.log(
       `in=${usage.input.toLocaleString().padStart(9)} out=${usage.output.toLocaleString().padStart(6)} ` +
         `cacheR=${usage.cacheRead.toLocaleString().padStart(8)} turns=${turns.turns} ` +
@@ -173,7 +182,17 @@ export async function runOneArm({
   } catch (err) {
     const why = err instanceof AssertionFailed ? err.message : `${err.name}: ${err.message}`
     console.log(`DISCARDED  ${why}`)
-    return { arm: label, ok: false, discarded: why }
+    // A discarded arm is not a measurement, but its usage is how the cause is found.
+    // The first Sonnet attempt threw away the per-model split of a cache it should
+    // not have had, and with it the only clue.
+    return {
+      arm: label,
+      ok: false,
+      discarded: why,
+      usage: run?.result ? totalUsage(run.result) : null,
+      tools: run?.initTools ?? null,
+      turns: run ? run.turns.summary() : null,
+    }
   } finally {
     await rm(configDir, { recursive: true, force: true })
     await rm(workDir, { recursive: true, force: true })

@@ -64,6 +64,8 @@ export function armStats(records, task, schemaVersion) {
   return {
     runs: ok.length,
     discarded: records.length - ok.length,
+    // Uncached runs that still read or wrote the cache. Flagged, never hidden.
+    cacheLeaks: ok.filter((r) => r.usage?.cacheLeak).length,
     graded: graded.length,
     pass: graded.filter((r) => r.grade.pass).length,
     // pass^k: correct in every run. One wrong run in five is a reliability finding.
@@ -125,7 +127,8 @@ export function pairStats(sweeps, codeArm, directArm, task) {
 export const PAIRS = [
   ['B-uncached', 'A-uncached'],
   ['B-cached', 'A-cached'],
-  ['B-uncached', 'A-files'],
+  // A-files caches whatever it is told, so it is compared with cached code mode.
+  ['B-cached', 'A-files'],
   ['B-uncached', 'A-raw'],
   ['B-uncached', 'A-tool'],
 ]

@@ -101,8 +101,14 @@ export const ARM_NAMES = [
 export const DEFAULT_ARMS = ['floor', 'A-uncached', 'A-cached', 'B-uncached', 'B-cached']
 
 /** Arms whose results must show zero cache activity, asserted after the run. */
-export const UNCACHED_ARMS = ['floor', 'A-uncached', 'A-files', 'A-raw', 'B-uncached']
-export const CACHED_ARMS = ['A-cached', 'B-cached']
+export const UNCACHED_ARMS = ['floor', 'A-uncached', 'A-raw', 'B-uncached']
+/**
+ * A-files is cached because Claude Code caches whenever Read and Grep are loaded,
+ * DISABLE_PROMPT_CACHING or not: on 2026-09-22 it wrote 4,209 cache tokens on its
+ * first request with the variable set. So it runs as what it is, a cached arm, and
+ * the summary compares it with cached code mode.
+ */
+export const CACHED_ARMS = ['A-cached', 'A-files', 'B-cached']
 export const CODEMODE_ARMS = ['B-uncached', 'B-cached']
 export const DIRECT_ARMS = ['A-uncached', 'A-cached', 'A-files', 'A-raw']
 
@@ -219,12 +225,15 @@ export function armOptions(arm, { task, picked, cfg, configDir, workDir, disallo
     case 'A-files':
       return {
         ...direct,
+        // Reading a 383 KiB file through Read takes many turns. At the shared cap of
+        // 12 the first attempt ran out before it answered, which measured the cap.
+        maxTurns: cfg.filesMaxTurns ?? 40,
         tools: FILE_TOOLS,
         allowedTools: [...direct.allowedTools, ...FILE_TOOLS],
         // The spilled result lands under the config directory. Nothing else is
         // readable: cwd is empty.
         additionalDirectories: [configDir],
-        env: armEnv(arm, uncached, configDir),
+        env: armEnv(arm, {}, configDir),
       }
     case 'A-raw':
       return {
