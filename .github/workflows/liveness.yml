@@ -55,7 +55,11 @@ jobs:
       - name: build
         run: npx tsc --build
 
+      # `shell: bash` is what turns on pipefail. The default shell runs `bash -e`
+      # without it, so the exit code of this pipe was the exit code of tee. The probe
+      # reported two stale claims on 2026-09-22 and the run still went green.
       - name: probe
+        shell: bash
         run: node scripts/liveness.mjs | tee liveness.log
 
       - name: put the summary on the run page

@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
-  "startedAt": "2026-09-21T16:24:52.000Z",
-  "finishedAt": "2026-09-21T16:26:32.186Z",
+  "schemaVersion": 2,
+  "startedAt": "2026-09-22T18:21:50.782Z",
+  "finishedAt": "2026-09-22T18:24:39.570Z",
   "node": "v26.5.0",
   "origin": "https://ulehla.dev",
   "windowTokens": 200000,
@@ -33,17 +33,23 @@
           "measured": 3
         },
         {
+          "claim": "tool names",
+          "ok": true,
+          "recorded": "ask_wiki_question, read_wiki_contents, read_wiki_structure",
+          "measured": "ask_wiki_question, read_wiki_contents, read_wiki_structure"
+        },
+        {
           "claim": "tools JSON bytes",
           "ok": true,
-          "recorded": 1526,
-          "measured": 1526,
+          "recorded": 1548,
+          "measured": 1548,
           "note": "drift 0.0%, tolerance 10%"
         },
         {
           "claim": "typed surface bytes",
           "ok": true,
-          "recorded": 1157,
-          "measured": 1157,
+          "recorded": 1124,
+          "measured": 1124,
           "note": "drift 0.0%, tolerance 10%"
         },
         {
@@ -56,9 +62,9 @@
         {
           "claim": "payload of read_wiki_contents",
           "ok": true,
-          "recorded": "1.48 MB",
-          "measured": "1.48 MB",
-          "note": "wire bytes, drift 0.0%, tolerance 35%"
+          "recorded": "728.2 KiB",
+          "measured": "728.2 KiB",
+          "note": "text bytes, drift 0.0%, tolerance 35%"
         }
       ],
       "exposedHeaders": null,
@@ -67,14 +73,15 @@
         "args": {
           "repoName": "apify/apify-mcp-server"
         },
+        "recordedTextBytes": 745654,
+        "measuredTextBytes": 745654,
         "recordedWireBytes": 1550347,
         "measuredWireBytes": 1550347,
-        "measuredTextBytes": 745654,
         "estTokensLow": 196225,
         "estTokensHigh": 225956,
         "windowShareLow": 0.981125,
         "windowShareHigh": 1.12978,
-        "ms": 55748
+        "ms": 2886
       },
       "ok": true
     },
@@ -93,6 +100,12 @@
           "ok": true,
           "recorded": 2,
           "measured": 2
+        },
+        {
+          "claim": "tool names",
+          "ok": true,
+          "recorded": "query-docs, resolve-library-id",
+          "measured": "query-docs, resolve-library-id"
         },
         {
           "claim": "tools JSON bytes",
@@ -136,6 +149,12 @@
           "measured": 3
         },
         {
+          "claim": "tool names",
+          "ok": true,
+          "recorded": "microsoft_code_sample_search, microsoft_docs_fetch, microsoft_docs_search",
+          "measured": "microsoft_code_sample_search, microsoft_docs_fetch, microsoft_docs_search"
+        },
+        {
           "claim": "tools JSON bytes",
           "ok": true,
           "recorded": 4868,
@@ -145,8 +164,8 @@
         {
           "claim": "typed surface bytes",
           "ok": true,
-          "recorded": 2806,
-          "measured": 2806,
+          "recorded": 3110,
+          "measured": 3110,
           "note": "drift 0.0%, tolerance 10%"
         },
         {
@@ -159,9 +178,9 @@
         {
           "claim": "payload of microsoft_docs_search",
           "ok": true,
-          "recorded": "48.4 kB",
-          "measured": "48.4 kB",
-          "note": "wire bytes, drift 0.0%, tolerance 35%"
+          "recorded": "23.6 KiB",
+          "measured": "23.6 KiB",
+          "note": "text bytes, drift 0.0%, tolerance 35%"
         }
       ],
       "exposedHeaders": null,
@@ -170,14 +189,15 @@
         "args": {
           "query": "durable functions orchestration patterns"
         },
+        "recordedTextBytes": 24187,
+        "measuredTextBytes": 24187,
         "recordedWireBytes": 49595,
         "measuredWireBytes": 49595,
-        "measuredTextBytes": 24187,
         "estTokensLow": 6365,
         "estTokensHigh": 7329,
         "windowShareLow": 0.031825,
         "windowShareHigh": 0.036645,
-        "ms": 704
+        "ms": 538
       },
       "ok": true
     },
@@ -196,6 +216,12 @@
           "ok": true,
           "recorded": 5,
           "measured": 5
+        },
+        {
+          "claim": "tool names",
+          "ok": true,
+          "recorded": "fetch_generic_documentation, fetch_generic_url_content, match_common_libs_owner_repo_mapping, search_generic_code, search_generic_documentation",
+          "measured": "fetch_generic_documentation, fetch_generic_url_content, match_common_libs_owner_repo_mapping, search_generic_code, search_generic_documentation"
         },
         {
           "claim": "tools JSON bytes",
@@ -239,6 +265,12 @@
           "measured": 4
         },
         {
+          "claim": "tool names",
+          "ok": true,
+          "recorded": "hf_fs, hf_whoami, hub_repo_details, hub_repo_search",
+          "measured": "hf_fs, hf_whoami, hub_repo_details, hub_repo_search"
+        },
+        {
           "claim": "tools JSON bytes",
           "ok": true,
           "recorded": 18828,
@@ -248,8 +280,8 @@
         {
           "claim": "typed surface bytes",
           "ok": true,
-          "recorded": 6980,
-          "measured": 6980,
+          "recorded": 7214,
+          "measured": 7214,
           "note": "drift 0.0%, tolerance 10%"
         },
         {
@@ -280,6 +312,12 @@
           "measured": 4
         },
         {
+          "claim": "tool names",
+          "ok": true,
+          "recorded": "fetch-actor-details, fetch-apify-docs, search-actors, search-apify-docs",
+          "measured": "fetch-actor-details, fetch-apify-docs, search-actors, search-apify-docs"
+        },
+        {
           "claim": "tools JSON bytes",
           "ok": true,
           "recorded": 21539,
@@ -289,8 +327,8 @@
         {
           "claim": "typed surface bytes",
           "ok": true,
-          "recorded": 14535,
-          "measured": 14535,
+          "recorded": 15077,
+          "measured": 15077,
           "note": "drift 0.0%, tolerance 10%"
         },
         {
@@ -303,9 +341,9 @@
         {
           "claim": "payload of fetch-apify-docs",
           "ok": true,
-          "recorded": "6.2 kB",
-          "measured": "6.3 kB",
-          "note": "wire bytes, drift +1.8%, tolerance 35%"
+          "recorded": "3.0 KiB",
+          "measured": "3.0 KiB",
+          "note": "text bytes, drift 0.0%, tolerance 35%"
         }
       ],
       "exposedHeaders": null,
@@ -314,63 +352,109 @@
         "args": {
           "url": "https://docs.apify.com/platform/actors"
         },
-        "recordedWireBytes": 6300,
-        "measuredWireBytes": 6411,
+        "recordedTextBytes": 3037,
         "measuredTextBytes": 3037,
+        "recordedWireBytes": 6411,
+        "measuredWireBytes": 6411,
         "estTokensLow": 799,
         "estTokensHigh": 920,
         "windowShareLow": 0.003995,
         "windowShareHigh": 0.0046,
-        "ms": 528
+        "ms": 228
       },
       "ok": true
     }
   ],
   "tasks": [
     {
-      "id": "cross-repo-scan",
+      "id": "one-big-payload",
       "expectCodeModeWins": true,
+      "predictionUncertain": false,
       "ok": true,
-      "calls": 4,
-      "boundaryInBytes": 1786374,
-      "returnedBytes": 603,
-      "reduction": 2962.5,
-      "estTokensLow": 470098,
-      "estTokensHigh": 541325,
-      "windowShareLow": 2.35049,
-      "windowShareHigh": 2.706625,
-      "ms": 7110,
+      "calls": 1,
+      "boundaryInBytes": 392601,
+      "returnedBytes": 98,
+      "reduction": 4006.1,
+      "estTokensLow": 103316,
+      "estTokensHigh": 118970,
+      "windowShareLow": 0.51658,
+      "windowShareHigh": 0.59485,
+      "ms": 28173,
+      "largestCallTextBytes": 392601,
+      "largestCallTokensLow": 103316,
       "verdictHeld": true
     },
     {
-      "id": "sequential-pair",
+      "id": "outline-leaves",
       "expectCodeModeWins": false,
-      "ok": true,
-      "calls": 2,
-      "boundaryInBytes": 6198,
-      "returnedBytes": 4344,
-      "reduction": 1.4,
-      "estTokensLow": 1631,
-      "estTokensHigh": 1878,
-      "windowShareLow": 0.008155,
-      "windowShareHigh": 0.00939,
-      "ms": 2502,
-      "verdictHeld": true
-    },
-    {
-      "id": "single-call",
-      "expectCodeModeWins": false,
+      "predictionUncertain": false,
       "ok": true,
       "calls": 1,
       "boundaryInBytes": 1030,
-      "returnedBytes": 1064,
-      "reduction": 1,
+      "returnedBytes": 79,
+      "reduction": 13,
       "estTokensLow": 271,
       "estTokensHigh": 312,
       "windowShareLow": 0.001355,
       "windowShareHigh": 0.00156,
-      "ms": 380,
+      "ms": 436,
+      "largestCallTextBytes": 1030,
+      "largestCallTokensLow": 271,
       "verdictHeld": true
+    },
+    {
+      "id": "structure-rank",
+      "expectCodeModeWins": false,
+      "predictionUncertain": false,
+      "ok": true,
+      "calls": 4,
+      "boundaryInBytes": 4457,
+      "returnedBytes": 78,
+      "reduction": 57.1,
+      "estTokensLow": 1173,
+      "estTokensHigh": 1351,
+      "windowShareLow": 0.005865,
+      "windowShareHigh": 0.006755,
+      "ms": 1440,
+      "largestCallTextBytes": 1786,
+      "largestCallTokensLow": 470,
+      "verdictHeld": true
+    },
+    {
+      "id": "table-heavy-page",
+      "expectCodeModeWins": true,
+      "predictionUncertain": false,
+      "ok": true,
+      "calls": 3,
+      "boundaryInBytes": 1393773,
+      "returnedBytes": 371,
+      "reduction": 3756.8,
+      "estTokensLow": 366782,
+      "estTokensHigh": 422355,
+      "windowShareLow": 1.83391,
+      "windowShareHigh": 2.111775,
+      "ms": 98505,
+      "largestCallTextBytes": 700150,
+      "largestCallTokensLow": 184250,
+      "verdictHeld": true
+    },
+    {
+      "id": "topic-overlap",
+      "expectCodeModeWins": true,
+      "predictionUncertain": true,
+      "ok": true,
+      "calls": 7,
+      "boundaryInBytes": 9226,
+      "returnedBytes": 1101,
+      "reduction": 8.4,
+      "estTokensLow": 2428,
+      "estTokensHigh": 2796,
+      "windowShareLow": 0.01214,
+      "windowShareHigh": 0.01398,
+      "ms": 2652,
+      "largestCallTextBytes": 2104,
+      "largestCallTokensLow": 554,
+      "verdictHeld": null
     }
   ]
 }

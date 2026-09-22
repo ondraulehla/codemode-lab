@@ -1,7 +1,7 @@
 /**
  * The claim-rot guard.
  *
- * The README and the site publish measured numbers: transport modes, tool counts,
+ * The README, the docs and the project page publish measured numbers: transport modes, tool counts,
  * definition sizes, CORS posture and payload sizes. Those numbers are true on the
  * day they were measured. Somebody else owns every one of these servers, so any of
  * them can change a tool list, close CORS or start truncating a payload, and the
@@ -10,7 +10,8 @@
  *
  * Courtesy rules, because these are free servers paid for by other people:
  * one run a day, serial, never in a burst, and never a tool that spends the
- * provider's money. DeepWiki's ask_question is the one to stay away from.
+ * provider's money. DeepWiki's question tool runs a model on DeepWiki's account.
+ * It is never called, whatever it is named this week.
  */
 
 import { fileURLToPath } from 'node:url'
@@ -24,7 +25,11 @@ import { listTasks, loadTask, runCodeModeArm } from '../packages/cli/dist/index.
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(HERE, '..')
 
-/** The origin the browser demo is served from. CORS is checked as that page sees it. */
+/**
+ * The origin a page of this project is served from. CORS is checked as that page
+ * would see it. The page no longer calls any server, it replays a recording, but
+ * whether a page could is still a published claim in docs/servers.md.
+ */
 const ORIGIN = 'https://ulehla.dev'
 
 const WINDOW_TOKENS = 200_000
@@ -62,11 +67,27 @@ const PAYLOAD_TOLERANCE = 0.35
 /**
  * What a winning task must still prove.
  *
- * cross-repo-scan wins because the payload it reads cannot fit in a window and the
- * answer it returns is tiny. Both halves are asserted. The measured reduction on
- * 2026-09-21 was about 2,900x, so 50x is a floor, not a target.
+ * A task is published as a code mode win for two reasons, and both are asserted.
+ * One result is over the MCP output limit of the client the harness runs, so the
+ * direct arm gets a file path instead of the data. And the answer the program
+ * returns is small. The measured reductions on 2026-09-22 were about 3,750x and
+ * 4,000x, so 50x is a floor, not a target.
+ *
+ * This used to assert that one run does not fit in a 200K window. That was the
+ * rule for a retired task. one-big-payload fits a 200K window and still wins,
+ * because the output limit stops the direct arm long before the window does.
  */
 const WIN_MIN_REDUCTION = 50
+
+/**
+ * Claude Code's default MCP output limit, in tokens.
+ *
+ * Above it, the result goes to a file and the model gets the path. Documented at
+ * code.claude.com/docs/en/mcp. The check divides by the generous end of the byte
+ * band, so a payload counts as over the limit only if it is over at 3.8 bytes per
+ * token.
+ */
+const CLIENT_OUTPUT_LIMIT_TOKENS = 25_000
 
 /**
  * What a losing task must still prove.
@@ -180,6 +201,17 @@ async function checkServer(spec, stale) {
     })
   }
 
+  // A count alone missed a rename. DeepWiki replaced ask_question with
+  // ask_wiki_question on 2026-09-22 and the count stayed at three.
+  const names = tools.map((t) => t.name).sort()
+  const recordedNames = [...(spec.toolNames ?? [])].sort()
+  add(
+    'tool names',
+    names.join(',') === recordedNames.join(','),
+    recordedNames.join(', '),
+    names.join(', '),
+  )
+
   // One definition of size, for every server, whatever transport it speaks.
   //
   // This used to measure the HTTP response body, and for a session server that meant
@@ -224,23 +256,23 @@ async function checkServer(spec, stale) {
   report.exposedHeaders = pre.exposeHeaders ?? null
 
   if (spec.largestKnownCall) {
-    const { tool, args, bytes: recordedBytes } = spec.largestKnownCall
+    const { tool, args, textBytes: recordedText, wireBytes: recordedWire } = spec.largestKnownCall
     await withRetry(`${spec.id} ${tool}`, () => client.callTool(tool, args))
 
-    // The meter counted both ends of the same response. The recorded figure in
-    // SERVERS is wire bytes, so the drift check is wire to wire. Every statement
-    // about a context window uses textBytes, which is about half as large.
+    // Text to text. Every context claim in this repo is made in text bytes, so the
+    // drift that matters is in text bytes. The wire figure is observed, not asserted:
+    // it moves with SSE framing and escaping, which no claim depends on.
     const call = meter.records.at(-1)
-    const wireBytes = call.wireBytes
     const textBytes = call.textBytes
     const band = tokenBand(textBytes)
 
     report.payload = {
       tool,
       args,
-      recordedWireBytes: recordedBytes,
-      measuredWireBytes: wireBytes,
+      recordedTextBytes: recordedText,
       measuredTextBytes: textBytes,
+      recordedWireBytes: recordedWire,
+      measuredWireBytes: call.wireBytes,
       estTokensLow: band.low,
       estTokensHigh: band.high,
       windowShareLow: band.low / WINDOW_TOKENS,
@@ -250,10 +282,10 @@ async function checkServer(spec, stale) {
 
     add(
       `payload of ${tool}`,
-      withinTolerance(wireBytes, recordedBytes, PAYLOAD_TOLERANCE),
-      formatBytes(recordedBytes),
-      formatBytes(wireBytes),
-      `wire bytes, drift ${drift(wireBytes, recordedBytes)}, tolerance ${PAYLOAD_TOLERANCE * 100}%`,
+      withinTolerance(textBytes, recordedText, PAYLOAD_TOLERANCE),
+      formatBytes(recordedText),
+      formatBytes(textBytes),
+      `text bytes, drift ${drift(textBytes, recordedText)}, tolerance ${PAYLOAD_TOLERANCE * 100}%`,
     )
   }
 
@@ -275,6 +307,7 @@ async function checkTasks(stale) {
     const report = {
       id,
       expectCodeModeWins: task.expectCodeModeWins,
+      predictionUncertain: task.predictionUncertain === true,
       ok: arm.ok,
       failure: arm.failure,
       error: arm.error ? short(arm.error) : undefined,
@@ -292,13 +325,19 @@ async function checkTasks(stale) {
     if (!arm.ok)
       stale.push(`task ${id}: the code mode arm no longer runs (${arm.failure ?? 'unknown'})`)
 
-    if (task.expectCodeModeWins) {
-      // The win is two facts, so both are asserted. The payload must still not fit,
-      // and the answer must still be small enough to be worth reading.
-      if (windowShareLow < 1) {
+    const largestLow = Math.round(arm.largestCallTextBytes / BYTES_PER_TOKEN_LOW)
+    report.largestCallTextBytes = arm.largestCallTextBytes
+    report.largestCallTokensLow = largestLow
+
+    if (task.predictionUncertain) {
+      // Recorded as "I do not know" before the run. There is no published verdict
+      // to hold, so only the program itself is checked.
+      report.verdictHeld = null
+    } else if (task.expectCodeModeWins) {
+      if (largestLow <= CLIENT_OUTPUT_LIMIT_TOKENS) {
         stale.push(
-          `task ${id}: it wins because one run does not fit in a ${WINDOW_TOKENS / 1000}K window, ` +
-            `but it now reads only about ${band.low.toLocaleString()} tokens, which fits`,
+          `task ${id}: it wins because one result is over the ${CLIENT_OUTPUT_LIMIT_TOKENS.toLocaleString()} token ` +
+            `MCP output limit, but its largest result is now about ${largestLow.toLocaleString()} tokens`,
         )
         report.verdictHeld = false
       } else if (reduction < WIN_MIN_REDUCTION) {
@@ -352,8 +391,13 @@ function printServer(r) {
 }
 
 function printTask(t) {
-  const mark = t.ok && t.verdictHeld ? 'ok  ' : 'FAIL'
-  const expected = t.expectCodeModeWins ? 'expected to win' : 'expected to lose'
+  const mark = t.ok && t.verdictHeld !== false ? 'ok  ' : 'FAIL'
+  const expected =
+    t.verdictHeld === null
+      ? 'uncertain'
+      : t.expectCodeModeWins
+        ? 'expected to win'
+        : 'expected to lose'
   console.log(
     `${mark} ${t.id.padEnd(17)} ${expected.padEnd(17)} ${t.calls} call${t.calls === 1 ? '' : 's'}, ` +
       `read ${formatBytes(t.boundaryInBytes)}, ` +
@@ -402,7 +446,7 @@ async function main() {
 
   const finishedAt = new Date().toISOString()
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     startedAt,
     finishedAt,
     node: process.version,

@@ -3,9 +3,12 @@ import type { McpClientOptions } from './client.js'
 /**
  * The public MCP servers this project measures.
  *
- * Every field here was measured on 2026-09-21 with curl, not read off a README.
- * `corsOpen` decides whether the browser demo can call the server at all, and
- * `needsAuth` decides whether it is allowed anywhere near the public page.
+ * Every field here was measured with curl or with this package, not read off a
+ * README. Transport and CORS were measured on 2026-09-21. Tool names, definition
+ * sizes and payloads were re-measured on 2026-09-22, after DeepWiki renamed a tool
+ * and after the typed surface stopped declaring output schemas as return types.
+ * `corsOpen` decides whether a page can call the server at all, and `needsAuth`
+ * decides whether it is allowed anywhere near a public page.
  */
 export interface ServerSpec {
   id: string
@@ -29,14 +32,30 @@ export interface ServerSpec {
   /** Byte length of the generated TypeScript surface for the same tools. */
   typedSurfaceBytes: number
   toolCount: number
-  /** The call that shows why payload size matters, with its measured size. */
-  largestKnownCall?: { tool: string; args: Record<string, unknown>; bytes: number }
+  /**
+   * The tool names, sorted. A count alone missed a rename: DeepWiki replaced
+   * `ask_question` with `ask_wiki_question` on 2026-09-22, the count stayed at
+   * three, and a deny rule written against the old name protected nothing.
+   */
+  toolNames: string[]
+  /**
+   * The call that shows why payload size matters, with both of its sizes.
+   *
+   * `textBytes` is what a model would read, and every context claim uses it.
+   * `wireBytes` includes SSE framing and JSON escaping and is kept for reference.
+   */
+  largestKnownCall?: {
+    tool: string
+    args: Record<string, unknown>
+    wireBytes: number
+    textBytes: number
+  }
   /**
    * Realistic arguments for probing each tool.
    *
    * Without these, a scanner invents a generic query and reports a tiny payload,
    * which flatters the server and produces a wrong verdict. Measured example:
-   * Microsoft Learn returns 14 bytes for "getting started" and 24 kB for a real
+   * Microsoft Learn returns 14 bytes for "getting started" and 24,187 bytes for a real
    * question. A probe is only as honest as its arguments.
    */
   probeHints?: Record<string, Record<string, unknown>>
@@ -48,8 +67,8 @@ export interface ServerSpec {
  *
  * Apify is the one server here where the DEFINITION tax is the big term. Measured
  * on 2026-09-21: the pinned four-tool subset is 21,539 B, and the authenticated
- * default set is eleven tools and about 71 kB, which is 10 percent of a 200K window
- * before any work happens. Its largest result, by contrast, is 9.8 kB. It is the
+ * default set is eleven tools and about 71 KiB, which is 10 percent of a 200K window
+ * before any work happens. Its largest result, by contrast, is 9.8 KiB. It is the
  * exact inverse of DeepWiki, which is why both belong in the set.
  *
  * Authentication does NOT change the schemas. The same four tools come back byte
@@ -71,7 +90,7 @@ export interface ServerSpec {
 const APIFY_NOTES =
   'The inverse of DeepWiki: definitions are the expensive term and payloads are small. ' +
   'The pinned four-tool subset is 21,539 B. The authenticated default set is 11 tools and ' +
-  'about 71 kB, roughly 10 percent of a 200K window, but it is not stable: apify--rag-web-browser ' +
+  'about 71 KiB, roughly 10 percent of a 200K window, but it is not stable: apify--rag-web-browser ' +
   'alone swings 9,423 bytes between identical calls, so no single figure for it is honest.'
 
 export const SERVERS: ServerSpec[] = [
@@ -82,13 +101,15 @@ export const SERVERS: ServerSpec[] = [
     corsOpen: true,
     session: false,
     needsAuth: false,
-    toolsListBytes: 1526,
-    typedSurfaceBytes: 1157,
+    toolsListBytes: 1548,
+    typedSurfaceBytes: 1124,
     toolCount: 3,
+    toolNames: ['ask_wiki_question', 'read_wiki_contents', 'read_wiki_structure'],
     largestKnownCall: {
       tool: 'read_wiki_contents',
       args: { repoName: 'apify/apify-mcp-server' },
-      bytes: 1_550_347,
+      wireBytes: 1_550_347,
+      textBytes: 745_654,
     },
     probeHints: {
       read_wiki_contents: { repoName: 'cloudflare/agents' },
@@ -108,6 +129,7 @@ export const SERVERS: ServerSpec[] = [
     toolsListBytes: 4874,
     typedSurfaceBytes: 3016,
     toolCount: 2,
+    toolNames: ['query-docs', 'resolve-library-id'],
     probeHints: {
       'resolve-library-id': { query: 'next.js app router', libraryName: 'next.js' },
       'query-docs': { libraryId: '/vercel/next.js', query: 'app router server actions' },
@@ -122,12 +144,14 @@ export const SERVERS: ServerSpec[] = [
     session: false,
     needsAuth: false,
     toolsListBytes: 4868,
-    typedSurfaceBytes: 2806,
+    typedSurfaceBytes: 3110,
     toolCount: 3,
+    toolNames: ['microsoft_code_sample_search', 'microsoft_docs_fetch', 'microsoft_docs_search'],
     largestKnownCall: {
       tool: 'microsoft_docs_search',
       args: { query: 'durable functions orchestration patterns' },
-      bytes: 49_595,
+      wireBytes: 49_595,
+      textBytes: 24_187,
     },
     probeHints: {
       microsoft_docs_search: { query: 'durable functions orchestration patterns' },
@@ -149,6 +173,13 @@ export const SERVERS: ServerSpec[] = [
     toolsListBytes: 2890,
     typedSurfaceBytes: 2418,
     toolCount: 5,
+    toolNames: [
+      'fetch_generic_documentation',
+      'fetch_generic_url_content',
+      'match_common_libs_owner_repo_mapping',
+      'search_generic_code',
+      'search_generic_documentation',
+    ],
     notes:
       'Requires initialize and an Mcp-Session-Id. Usable from a browser because it sets ' +
       'access-control-expose-headers: mcp-session-id, which a session server must do or pages cannot read the id.',
@@ -161,8 +192,9 @@ export const SERVERS: ServerSpec[] = [
     session: true,
     needsAuth: false,
     toolsListBytes: 18828,
-    typedSurfaceBytes: 6980,
+    typedSurfaceBytes: 7214,
     toolCount: 4,
+    toolNames: ['hf_fs', 'hf_whoami', 'hub_repo_details', 'hub_repo_search'],
     notes: 'Session server. Answers initialize as application/json, not SSE.',
   },
   {
@@ -178,12 +210,14 @@ export const SERVERS: ServerSpec[] = [
     // endpoint answers 401 and asks for a bearer token.
     needsAuth: false,
     toolsListBytes: 21539,
-    typedSurfaceBytes: 14535,
+    typedSurfaceBytes: 15077,
     toolCount: 4,
+    toolNames: ['fetch-actor-details', 'fetch-apify-docs', 'search-actors', 'search-apify-docs'],
     largestKnownCall: {
       tool: 'fetch-apify-docs',
       args: { url: 'https://docs.apify.com/platform/actors' },
-      bytes: 6300,
+      wireBytes: 6411,
+      textBytes: 3037,
     },
     notes: APIFY_NOTES,
   },
