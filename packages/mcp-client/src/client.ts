@@ -51,6 +51,7 @@ export class McpClient {
   private sessionId?: string
   private negotiatedVersion?: string
   private nextId = 1
+  private instructions?: string
 
   /** Set once `connect()` has probed the server. */
   mode?: TransportMode
@@ -88,12 +89,37 @@ export class McpClient {
       { captureSession: true },
     )
     this.negotiatedVersion = (init.result as { protocolVersion?: string })?.protocolVersion
+    this.instructions = (init.result as { instructions?: string })?.instructions ?? ''
 
     // The spec requires this notification before normal requests. It takes no reply.
     await this.notify('notifications/initialized')
 
     const listed = await this.rpc('tools/list', {})
     return (listed.result as { tools: McpTool[] }).tools
+  }
+
+  /**
+   * The server's `instructions`, from its `initialize` reply. Empty when it sends none.
+   *
+   * A client puts these in front of the model next to the tool definitions. Claude
+   * Code does, which is why the harness passes them to the code mode arm as well:
+   * DeepWiki's are 3,129 bytes, and on 2026-09-22 they were the largest part of the
+   * direct arm's definition tax. A stateless server is never initialized by
+   * `connect()`, so this asks once, and keeps no session.
+   */
+  async getInstructions(): Promise<string> {
+    if (this.instructions !== undefined) return this.instructions
+    const init = await this.rpc(
+      'initialize',
+      {
+        protocolVersion: CLIENT_PROTOCOL_VERSION,
+        capabilities: {},
+        clientInfo: { name: 'codemode-lab', version: '0.1.0' },
+      },
+      { tolerateError: true },
+    )
+    this.instructions = (init.result as { instructions?: string } | undefined)?.instructions ?? ''
+    return this.instructions
   }
 
   async listTools(): Promise<McpTool[]> {
@@ -108,7 +134,7 @@ export class McpClient {
    * Two byte counts are recorded because they answer different questions.
    * `wireBytes` is what the network carried, SSE framing and JSON escaping included.
    * `textBytes` is the text a model would actually be handed. The gap between them
-   * is real: a 1.4 MB DeepWiki response carries escaped newlines that shrink on parse.
+   * is real: a 1.48 MiB DeepWiki response carries escaped newlines that shrink on parse.
    */
   async callTool(name: string, args: Record<string, unknown> = {}): Promise<ToolResult> {
     if (!this.mode) await this.connect()
@@ -235,8 +261,8 @@ interface RpcOutcome extends RpcMessage {
 /**
  * Read a response body, counting bytes as they land.
  *
- * Streaming matters for one reason: the demo shows a counter climbing while a
- * 1.4 MB payload arrives. Buffering the whole body first would make the most
+ * Streaming matters for one reason: a page can show a counter climbing while a
+ * 1.48 MiB payload arrives. Buffering the whole body first would make the most
  * important number in the project appear all at once, which is exactly the thing
  * the page is trying to make visible.
  */

@@ -25,7 +25,7 @@ for (const [name, url] of targets) {
   }
 }
 
-console.log('\n--- streaming a 1.4 MB payload, with live progress ---')
+console.log('\n--- streaming a 1.48 MiB payload, with live progress ---')
 let ticks = 0
 const dw = new McpClient({
   url: 'https://mcp.deepwiki.com/mcp',

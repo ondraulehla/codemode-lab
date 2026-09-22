@@ -48,6 +48,57 @@ function scripted(steps: ((body: Record<string, unknown>) => Response)[]) {
   return { impl, seen }
 }
 
+describe('server instructions', () => {
+  it('asks a stateless server once, and keeps no session', async () => {
+    const { impl, seen } = scripted([
+      () => sse(TOOLS_LIST),
+      () =>
+        json({
+          jsonrpc: '2.0',
+          id: 2,
+          result: { protocolVersion: '2025-06-18', instructions: 'Use read_wiki_structure first.' },
+        }),
+    ])
+    const client = new McpClient({ url: 'https://mcp.deepwiki.com/mcp', fetchImpl: impl })
+    await client.connect()
+    expect(await client.getInstructions()).toBe('Use read_wiki_structure first.')
+    // Asked once: the second read comes from memory.
+    expect(await client.getInstructions()).toBe('Use read_wiki_structure first.')
+    expect(seen.map((s) => s.body.method)).toEqual(['tools/list', 'initialize'])
+  })
+
+  it('reads them from the handshake a session server already made', async () => {
+    const { impl, seen } = scripted([
+      () =>
+        json(
+          { jsonrpc: '2.0', id: 1, error: { code: -32600, message: 'Session ID required' } },
+          { status: 400 },
+        ),
+      () =>
+        json(
+          { jsonrpc: '2.0', id: 2, result: { protocolVersion: '2025-06-18', instructions: 'Hi.' } },
+          { headers: { 'mcp-session-id': 'abc' } },
+        ),
+      () => new Response(null, { status: 202 }),
+      () => sse(TOOLS_LIST),
+    ])
+    const client = new McpClient({ url: 'https://gitmcp.io/docs', fetchImpl: impl })
+    await client.connect()
+    expect(await client.getInstructions()).toBe('Hi.')
+    expect(seen.filter((s) => s.body.method === 'initialize')).toHaveLength(1)
+  })
+
+  it('returns an empty string for a server that sends none', async () => {
+    const { impl } = scripted([
+      () => sse(TOOLS_LIST),
+      () => json({ jsonrpc: '2.0', id: 2, result: { protocolVersion: '2025-06-18' } }),
+    ])
+    const client = new McpClient({ url: 'https://example.com/mcp', fetchImpl: impl })
+    await client.connect()
+    expect(await client.getInstructions()).toBe('')
+  })
+})
+
 describe('transport detection', () => {
   it('connects a stateless server in one request', async () => {
     const { impl, seen } = scripted([() => sse(TOOLS_LIST)])
@@ -216,7 +267,7 @@ describe('extractText', () => {
 })
 
 describe('server registry', () => {
-  it('keeps the measured facts the browser demo depends on', () => {
+  it('keeps the measured facts a browser client depends on', () => {
     const deepwiki = getServer('deepwiki')
     expect(deepwiki.corsOpen).toBe(true)
     expect(deepwiki.session).toBe(false)

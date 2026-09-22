@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
-import { formatBytes, estimateTokens } from '@codemode-lab/meter'
+import { formatBytes } from '@codemode-lab/meter'
 import { McpClient, SERVERS } from '@codemode-lab/mcp-client'
 import { generateSurface } from '@codemode-lab/typegen'
 import { scanServer, verdict } from './scan.js'
@@ -24,9 +24,9 @@ Options
 
 Known server ids: ${SERVERS.map((s) => s.id).join(', ')}
 
-Why this exists: every other MCP cost tool measures tool definitions. That term is
-small. The payload a single call returns is routinely 100x larger and decides
-whether your task fits in a context window at all.
+Why this exists: MCP cost tools audit tool definitions. On many servers that term
+is small, and the text one call returns can be 100x larger. That term decides
+whether a task can run with its results in the context window at all.
 `
 
 const DIM = process.stdout.isTTY ? '\x1b[2m' : ''
@@ -47,7 +47,7 @@ function resolveUrl(target: string): { url: string; name?: string } {
  * Credentials a scan may use, read from the environment and never from a flag.
  *
  * A token on the command line lands in shell history and in `ps` output. This is
- * also why no token ever reaches the browser demo: it has no way to receive one.
+ * also why no token ever reaches a public page: a page has no way to receive one.
  */
 function authFor(serverId?: string): { url: string; headers: Record<string, string> } | null {
   if (serverId === 'apify' && process.env.APIFY_TOKEN) {
@@ -127,9 +127,7 @@ async function main(): Promise<number> {
         return 0
       }
       console.log(s.source)
-      console.log(
-        `${DIM}// ${s.bytes} bytes, ~${estimateTokens(s.bytes).toLocaleString()} tokens (estimate)${RESET}`,
-      )
+      console.log(`${DIM}// ${s.bytes} bytes, ~${tokenBand(s.bytes)} tokens (estimate)${RESET}`)
       if (s.warnings.length) console.log(`${DIM}// warnings: ${s.warnings.join('; ')}${RESET}`)
       return 0
     }
@@ -157,9 +155,7 @@ async function main(): Promise<number> {
       console.log(
         `\n${BOLD}${report.server}${RESET} ${DIM}${report.url} (${report.mode})${RESET}\n`,
       )
-      console.log(
-        `${BOLD}The definition tax${RESET} ${DIM}- what every other tool measures${RESET}`,
-      )
+      console.log(`${BOLD}The definition tax${RESET} ${DIM}- what schema audits measure${RESET}`)
       console.log(`  ${report.toolCount} tools`)
       console.log(
         `  raw tools/list JSON   ${formatBytes(report.schemaBytes).padStart(10)}  ~${tokenBand(report.schemaBytes)} tokens`,
@@ -169,7 +165,7 @@ async function main(): Promise<number> {
       )
 
       if (report.probes.length) {
-        console.log(`\n${BOLD}The payload tax${RESET} ${DIM}- what nobody measures${RESET}`)
+        console.log(`\n${BOLD}The payload tax${RESET} ${DIM}- what one call returns${RESET}`)
         const sorted = [...report.probes].sort((a, b) => b.textBytes - a.textBytes)
         for (const p of sorted) {
           if (p.error) {

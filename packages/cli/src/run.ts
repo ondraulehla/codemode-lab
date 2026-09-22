@@ -20,6 +20,11 @@ export interface ArmResult {
   boundaryOut: number
   returnedBytes: number
   calls: number
+  /**
+   * The text of the single largest call. A task wins or loses on whether ONE result
+   * is over a client's output limit, which a total over several calls cannot show.
+   */
+  largestCallTextBytes: number
   ms: number
   failure?: string
   error?: string
@@ -40,7 +45,7 @@ export async function runCodeModeArm(
     const token = opts.tokens?.[serverId]
     if (spec.needsAuth && !token) {
       throw new Error(
-        `server "${serverId}" needs a token. Set it in the environment; it never belongs in the browser demo.`,
+        `server "${serverId}" needs a token. Set it in the environment; it never belongs in a public page.`,
       )
     }
     const client = new McpClient({
@@ -79,6 +84,7 @@ export async function runCodeModeArm(
     boundaryOut,
     returnedBytes: new TextEncoder().encode(returned).length,
     calls: meter.records.length,
+    largestCallTextBytes: Math.max(0, ...meter.records.map((r) => r.textBytes)),
     ms: result.ms,
     failure: result.failure,
     error: result.error,
@@ -134,6 +140,7 @@ export async function runDirectArm(
     // In direct calling, everything that came back IS what the model must read.
     returnedBytes: t.textBytes,
     calls: t.calls,
+    largestCallTextBytes: Math.max(0, ...meter.records.map((r) => r.textBytes)),
     ms: Date.now() - started,
     logs: [],
   }

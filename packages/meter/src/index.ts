@@ -1,8 +1,8 @@
 /**
  * The one place in this repo that counts bytes.
  *
- * Nothing in `site/` computes a number. It renders numbers this package measured
- * and numbers the CI harness billed. Keeping the measurement in one module is the
+ * Nothing in the CLI, the harness or the project page computes a byte count of its
+ * own. They render numbers this package measured and numbers the harness billed. Keeping the measurement in one module is the
  * whole reason a reader can trust the figures on the page.
  */
 
@@ -45,7 +45,7 @@ export interface MeterTotals {
 /**
  * Collects `CallRecord`s and hands them to a listener as they land.
  *
- * The listener is how the demo page animates a counter while a 1.4 MB payload
+ * The listener is how a page can animate a counter while a 1.48 MiB payload
  * is still arriving. Nothing here is async: recording must never change timing.
  */
 export class Meter {
@@ -110,9 +110,16 @@ export function estimateTokens(bytes: number): number {
   return Math.round(bytes / BYTES_PER_TOKEN_ESTIMATE)
 }
 
-/** Human byte formatting, used by the CLI and the page alike. */
+/**
+ * Human byte formatting, used by the CLI and the page alike.
+ *
+ * The units are binary and carry binary names: 1 KiB is 1,024 bytes. This function
+ * used to print "kB" for 1,024 bytes while the task texts used "kB" for 1,000, so
+ * one payload of 392,601 bytes appeared as 383.4 kB in one document and as 392 kB
+ * in another. A reader cannot check a ratio when one label means two quantities.
+ */
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} kB`
-  return `${(n / (1024 * 1024)).toFixed(2)} MB`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KiB`
+  return `${(n / (1024 * 1024)).toFixed(2)} MiB`
 }

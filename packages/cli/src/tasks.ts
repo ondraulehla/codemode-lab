@@ -14,10 +14,18 @@ export interface TaskDef {
    * The honest prediction, recorded before the run.
    *
    * Writing the expectation down first is what separates a measurement from a
-   * demo. Three tasks in this repo predict a code mode LOSS, and if one of them
+   * demo. Two tasks in this repo predict a code mode LOSS, and if one of them
    * unexpectedly wins, that is a finding, not a bug to hide.
    */
   expectCodeModeWins: boolean
+  /** True when the prediction was recorded as "I do not know". No verdict is asserted. */
+  predictionUncertain?: boolean
+  /** Arms the harness runs for this task on top of its default set. */
+  extraArms?: string[]
+  /** Predictions for comparisons added after the first run, with the date they were written. */
+  predictions?: Record<string, string>
+  /** Arms that may end without an answer, because that is the finding. */
+  mayNotComplete?: string[]
   timeoutMs?: number
 }
 

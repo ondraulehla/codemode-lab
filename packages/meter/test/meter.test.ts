@@ -127,16 +127,23 @@ describe('estimates and formatting', () => {
     expect(BYTES_PER_TOKEN_ESTIMATE).toBe(3.8)
     expect(estimateTokens(3800)).toBe(1000)
     expect(estimateTokens(0)).toBe(0)
-    // 728.2 kB of DeepWiki text, the measured apify/apify-mcp-server payload.
+    // 728,200 bytes: roughly the measured apify/apify-mcp-server payload.
     expect(estimateTokens(728_200)).toBe(191_632)
   })
 
   it('formatBytes switches unit at the right boundaries', () => {
     expect(formatBytes(0)).toBe('0 B')
     expect(formatBytes(1023)).toBe('1023 B')
-    expect(formatBytes(1024)).toBe('1.0 kB')
-    expect(formatBytes(1_048_575)).toBe('1024.0 kB')
-    expect(formatBytes(1_048_576)).toBe('1.00 MB')
-    expect(formatBytes(1_550_347)).toBe('1.48 MB')
+    expect(formatBytes(1024)).toBe('1.0 KiB')
+    expect(formatBytes(1_048_575)).toBe('1024.0 KiB')
+    expect(formatBytes(1_048_576)).toBe('1.00 MiB')
+    expect(formatBytes(1_550_347)).toBe('1.48 MiB')
+  })
+
+  it('formatBytes names binary units as binary units', () => {
+    // 700,150 bytes is the cloudflare/agents payload. Printed as "683.7 kB" it
+    // was read as 683,700 bytes once, and a published ratio went wrong.
+    expect(formatBytes(700_150)).toBe('683.7 KiB')
+    expect(formatBytes(700_150)).not.toMatch(/kB|MB/)
   })
 })

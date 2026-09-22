@@ -1,17 +1,19 @@
 import { McpClient, type McpTool } from '@codemode-lab/mcp-client'
-import { Meter, formatBytes, estimateTokens, utf8Bytes } from '@codemode-lab/meter'
+import { Meter, formatBytes, utf8Bytes } from '@codemode-lab/meter'
 import { generateSurface, schemaSurfaceBytes } from '@codemode-lab/typegen'
 
 /**
  * What one MCP server costs, both ways round.
  *
- * Every other tool in this space measures the definition tax: how many tokens the
- * tool schemas take before any work happens. That number is real and it is small.
- * On the three keyless servers this repo tracks it totals about 3,000 tokens.
+ * The MCP cost tools in this space audit the definition tax: how many tokens the
+ * tool schemas take before any work happens. That number is real and on many
+ * servers it is small. On the three keyless servers this repo tracks it totals
+ * about 3,000 tokens.
  *
- * Nobody measures the other number. A single `read_wiki_contents` call on DeepWiki
- * returns 274 kB to 728 kB of text, which is 74,000 to 226,000 tokens depending on
- * the tokenizer's ratio. That is the term that decides whether a task is possible.
+ * The other number is what one call returns. A single `read_wiki_contents` call on
+ * DeepWiki returns 274 KiB to 728 KiB of text, which is 74,000 to 226,000 tokens
+ * depending on the tokenizer's ratio. That term decides whether a task can run with
+ * its results in the context window at all.
  */
 export interface ScanReport {
   server: string
@@ -151,8 +153,11 @@ export function verdict(report: ScanReport, windowTokens = 200_000): string {
   const pctLo = Math.round((lo / windowTokens) * 100)
   const pctHi = Math.round((hi / windowTokens) * 100)
 
-  const defTokens = estimateTokens(report.schemaBytes)
-  const defPct = Math.round((defTokens / windowTokens) * 100)
+  // A band here too. "About 402 tokens" was one confident number, which is the
+  // thing this repo says it never prints.
+  const defLo = Math.round(report.schemaBytes / 3.8)
+  const defHi = Math.round(report.schemaBytes / 3.3)
+  const defPct = Math.round((defLo / windowTokens) * 100)
 
   // Two shapes of server, and the ratio only reads well in one of them. DeepWiki's
   // largest result is 459x its definitions. Apify's definitions are 7x its largest
@@ -163,16 +168,24 @@ export function verdict(report: ScanReport, windowTokens = 200_000): string {
       : `${(report.schemaBytes / biggest.textBytes).toFixed(1)}x SMALLER than the tool definitions`
 
   const head =
-    `${report.server}: ${report.toolCount} tools cost about ${defTokens.toLocaleString()} tokens to declare, ` +
+    `${report.server}: ${report.toolCount} tools cost about ${defLo.toLocaleString()} to ` +
+    `${defHi.toLocaleString()} tokens to declare, ` +
     `which is ${defPct}% of a ${windowTokens / 1000}K window. ` +
     `Its largest probed result, ${biggest.tool}, returned ${formatBytes(biggest.textBytes)} of text, ` +
     `roughly ${lo.toLocaleString()} to ${hi.toLocaleString()} tokens, ` +
     `which is ${pctLo}% to ${pctHi}% of the window and ${ratio}.`
 
-  if (pctLo >= 100)
-    return `${head} One call does not fit. Code mode is not an optimisation here, it is the only way to run the task.`
-  if (pctLo >= 25)
-    return `${head} Two or three calls exhaust the window. Filtering inside a sandbox is the difference between possible and not.`
+  // Code mode is one place to process a big result. It is not the only one, and the
+  // verdict used to say it was. A file the agent can search is another, and real
+  // clients already use it: Claude Code writes any MCP result over 25,000 tokens to
+  // a file. A narrower call, if the server offers one, is the third.
+  const elsewhere =
+    'Process the result outside the context window: in a sandbox (code mode), ' +
+    'in a file the agent can search, or through a narrower tool call.'
+
+  if (pctLo >= 100) return `${head} One call does not fit. ${elsewhere}`
+  if (pctLo >= 50) return `${head} A second call of this size does not fit. ${elsewhere}`
+  if (pctLo >= 25) return `${head} A few calls of this size fill the window. ${elsewhere}`
   if (defPct >= 5) {
     return (
       `${head} This is the inverted case: the definitions are the expensive term, not the results. ` +

@@ -133,7 +133,7 @@ describe('planProbes', () => {
       ],
       { microsoft_docs_search: { query: 'durable functions orchestration patterns' } },
     )
-    // Measured: the generic query returns 14 bytes here, a real one returns 24 kB.
+    // Measured: the generic query returns 14 bytes here, a real one returns 24,187 bytes.
     // A probe is only as honest as its arguments.
     expect(plan).toEqual([
       {
@@ -196,15 +196,32 @@ describe('verdict', () => {
   })
 
   it('says a single call does not fit when it fills the window', () => {
-    // 800 kB of text. At 3.3 to 3.8 bytes per token that is 105% to 121% of 200K.
+    // 800,000 bytes of text. At 3.3 to 3.8 bytes per token that is 105% to 121% of 200K.
     const v = verdict(report({ probes: [probe(800_000)] }))
     expect(v).toContain('One call does not fit')
-    expect(v).toContain('it is the only way to run the task')
   })
 
-  it('warns about two or three calls in the middle band', () => {
+  it('never calls code mode the only way, because it is not', () => {
+    // It used to say "it is the only way to run the task". A file the agent can
+    // search does the same job, and Claude Code already writes big results to one.
+    for (const bytes of [200_000, 700_150, 800_000]) {
+      const v = verdict(report({ probes: [probe(bytes)] }))
+      expect(v).not.toContain('only way')
+      expect(v).toContain('in a sandbox (code mode)')
+      expect(v).toContain('in a file the agent can search')
+    }
+  })
+
+  it('says a second call does not fit when one call takes half the window', () => {
+    // The measured cloudflare/agents payload: 92% to 106% of a 200K window.
+    const v = verdict(report({ probes: [probe(700_150)] }))
+    expect(v).toContain('A second call of this size does not fit')
+    expect(v).not.toContain('One call does not fit')
+  })
+
+  it('warns that a few calls fill the window in the middle band', () => {
     const v = verdict(report({ probes: [probe(200_000)] }))
-    expect(v).toContain('Two or three calls exhaust the window')
+    expect(v).toContain('A few calls of this size fill the window')
     expect(v).not.toContain('does not fit')
   })
 
@@ -228,15 +245,17 @@ describe('verdict', () => {
   })
 
   it('always states a band and never a single confident token count', () => {
-    const v = verdict(report({ probes: [probe(683_700)] }))
+    // 700,150 bytes, the cloudflare/agents payload. This test once used 683,700,
+    // which is the KiB figure written as if it were bytes.
+    const v = verdict(report({ probes: [probe(700_150)] }))
     // The window size is named once, on the definition clause. The payload clause
     // then says "of the window", because repeating "200K" in one sentence reads
     // like two different windows.
     expect(v).toMatch(/roughly [\d,]+ to [\d,]+ tokens/)
     expect(v).toMatch(/which is \d+% to \d+% of the window/)
     expect(v).toContain('of a 200K window')
-    expect(v).toContain('179,921 to 207,182 tokens')
-    expect(v).toContain('90% to 104% of the window')
+    expect(v).toContain('184,250 to 212,167 tokens')
+    expect(v).toContain('92% to 106% of the window')
     // The point of the test: a band, never one confident number.
     expect(v).not.toMatch(/roughly [\d,]+ tokens[^ ]/)
   })
@@ -250,7 +269,7 @@ describe('verdict', () => {
   it('compares the payload against the whole definition surface', () => {
     const v = verdict(report({ schemaBytes: 1526, probes: [probe(762_000)] }))
     expect(v).toContain('499x the entire tool definition surface')
-    expect(v).toContain('about 402 tokens to declare')
+    expect(v).toContain('about 402 to 462 tokens to declare')
   })
 
   it('writes no em dash, which is the house rule for every string that ships', () => {
