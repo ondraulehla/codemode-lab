@@ -286,14 +286,14 @@ node packages/cli/dist/bin.js scan deepwiki
 ```text
 The definition tax - what schema audits measure
   3 tools
-  raw tools/list JSON      1.5 KiB  ~407-469 tokens
-  typed code mode surface  1.1 KiB  ~296-341 tokens
+  raw tools/list JSON      1.5 KiB  ~407-645 tokens
+  typed code mode surface  1.1 KiB  ~296-469 tokens
 
 The payload tax - what one call returns
-  read_wiki_contents              683.7 KiB  ~184,250-212,167 tok  92% of window
+  read_wiki_contents              683.7 KiB  ~184,250-291,729 tok  92% of window
 
 Verdict
-  deepwiki: 3 tools cost about 407 to 469 tokens to declare, which is 0% of a 200K
+  deepwiki: 3 tools cost about 407 to 645 tokens to declare, which is 0% of a 200K
   window. Its largest probed result, read_wiki_contents, returned 683.7 KiB of text
   ... 452x the entire tool definition surface. A second call of this size does not
   fit. Process the result outside the context window: in a sandbox (code mode), in
@@ -302,7 +302,8 @@ Verdict
 
 That is the output of 2026-09-22, and the ratio is 452x, not 459x. DeepWiki renamed
 one tool that day and its card grew by 22 bytes. Live servers drift, which is why
-every table here carries a date.
+every table here carries a date. Its token figures are derived again at the band of
+2.4 to 3.8 bytes per token; the byte counts are as measured.
 
 Point it at a server with the opposite shape and it tells you the opposite thing.
 This output is from 2026-09-21, with an `APIFY_TOKEN`, before the verdict wording
@@ -354,12 +355,12 @@ node harness/summarize.mjs results/latest.json
 - **Byte counts are exact.** They are measured at the boundary and stated as fact.
   The units are B, KiB (1,024 bytes) and MiB.
 - **Token counts in `results/` are billed**, read off the API response.
-- **Token counts anywhere else are estimates**, shown as a band at 3.3 to 3.8 bytes
+- **Token counts anywhere else are estimates**, shown as a band at 2.4 to 3.8 bytes
   per token. This repo ships no tokenizer and will not print a single confident
-  token number. One billed count checks the band: on 2026-09-22, a result of 392,601
-  bytes grew the prompt by 163,895 tokens on claude-sonnet-5 and by 163,861 on
-  claude-opus-5, about 2.4 bytes per token. So for current models the band is
-  generous, and every token estimate here is too low.
+  token number. The high end is measured: on 2026-09-22, a result of 392,601 bytes
+  grew the prompt by 163,895 tokens on claude-sonnet-5 and by 163,861 on
+  claude-opus-5, about 2.4 bytes per token. The band used to end at 3.3, which put
+  every estimate for these models too low.
 - **Context figures never use wire bytes.** SSE framing and JSON escaping make the
   wire figure roughly twice the text, and only the text reaches a model.
 - **Dollar figures are list-price equivalents**, computed from billed tokens and

@@ -7,11 +7,11 @@
 its payloads too.**
 
 MCP cost tools audit the tool schemas. On three public servers that is about
-11,300 bytes, roughly 3,000 estimated tokens, 1.5% of a 200K window.
+11,300 bytes, roughly 3,000 to 4,700 estimated tokens, 1.5% to 2.3% of a 200K window.
 
 One `read_wiki_contents` call on DeepWiki returned 700,150 bytes (683.7 KiB) of
 text on 2026-09-21. That is 459 times the whole definition surface of the same
-server, and 92% to 106% of the window. One call.
+server, and 92% to 146% of the window. One call.
 
 ## Use it
 
@@ -28,25 +28,27 @@ deepwiki https://mcp.deepwiki.com/mcp (stateless)
 
 The definition tax - what schema audits measure
   3 tools
-  raw tools/list JSON      1.5 KiB  ~407-469 tokens
-  typed code mode surface  1.1 KiB  ~296-341 tokens
+  raw tools/list JSON      1.5 KiB  ~407-645 tokens
+  typed code mode surface  1.1 KiB  ~296-469 tokens
 
 The payload tax - what one call returns
-  read_wiki_contents              683.7 KiB  ~184,250-212,167 tok  92% of window
+  read_wiki_contents              683.7 KiB  ~184,250-291,729 tok  92% of window
                                  #####################################
-  read_wiki_structure               1.7 KiB  ~470-541 tok  0% of window
+  read_wiki_structure               1.7 KiB  ~470-744 tok  0% of window
                                  #
 
 Verdict
-  deepwiki: 3 tools cost about 407 to 469 tokens to declare, which is 0% of a 200K
+  deepwiki: 3 tools cost about 407 to 645 tokens to declare, which is 0% of a 200K
   window. Its largest probed result, read_wiki_contents, returned 683.7 KiB of text,
-  roughly 184,250 to 212,167 tokens, which is 92% to 106% of the window and 452x the
+  roughly 184,250 to 291,729 tokens, which is 92% to 146% of the window and 452x the
   entire tool definition surface. A second call of this size does not fit. Process
   the result outside the context window: in a sandbox (code mode), in a file the
   agent can search, or through a narrower tool call.
 ```
 
-Output on 2026-09-22. The verdict is derived from what was measured, and it will
+Output on 2026-09-22, with its token figures derived again at the band of 2.4 to
+3.8 bytes per token; the byte counts are as measured. The verdict is derived from
+what was measured, and it will
 tell you not to bother. On Microsoft Learn the payloads are small, so it says to
 turn on prompt caching instead of reaching for a sandbox. It never says code mode is
 the only way: a file the agent can search does the same job, and Claude Code
@@ -72,7 +74,7 @@ made.
 
 ## Honesty
 
-- **Token figures are estimates.** Bytes divided by 3.3 to 3.8 bytes per token,
+- **Token figures are estimates.** Bytes divided by 2.4 to 3.8 bytes per token,
   always shown as a band. This package ships no tokenizer and never prints a
   single confident token number. For exact counts use
   [`mcp-context-cost`](https://github.com/athakur3/mcp-context-cost).

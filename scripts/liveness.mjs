@@ -19,7 +19,12 @@ import { dirname, resolve } from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { SERVERS, McpClient } from '../packages/mcp-client/dist/index.js'
 import { schemaSurfaceBytes, generateSurface } from '../packages/typegen/dist/index.js'
-import { Meter, utf8Bytes, formatBytes } from '../packages/meter/dist/index.js'
+import {
+  BYTES_PER_TOKEN_BAND,
+  Meter,
+  utf8Bytes,
+  formatBytes,
+} from '../packages/meter/dist/index.js'
 import { listTasks, loadTask, runCodeModeArm } from '../packages/cli/dist/index.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -35,13 +40,13 @@ const ORIGIN = 'https://ulehla.dev'
 const WINDOW_TOKENS = 200_000
 
 /**
- * The two ends of the estimate band.
+ * The two ends of the estimate band, from packages/meter.
  *
  * This repo ships no tokenizer, so every token figure it prints is an estimate
  * from byte counts. The band is stated, never a single confident number.
  */
-const BYTES_PER_TOKEN_LOW = 3.8
-const BYTES_PER_TOKEN_HIGH = 3.3
+const BYTES_PER_TOKEN_LOW = BYTES_PER_TOKEN_BAND.low
+const BYTES_PER_TOKEN_HIGH = BYTES_PER_TOKEN_BAND.high
 
 /**
  * How far a tools/list may move before the published definition tax is wrong.

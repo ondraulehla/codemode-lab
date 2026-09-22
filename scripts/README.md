@@ -61,7 +61,7 @@ tool whose name starts with `ask`, and nothing here calls it by hand.
 ## A note on token numbers
 
 This repo ships no tokenizer. Every token figure these scripts print is an estimate
-from a byte count, at 3.3 to 3.8 bytes per token, and is printed as a band with the
+from a byte count, at 2.4 to 3.8 bytes per token, and is printed as a band with the
 word estimate next to it. Billed token counts come from the harness, which runs
 locally. See [harness/README.md](../harness/README.md).
 

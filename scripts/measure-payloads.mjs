@@ -1,5 +1,10 @@
 import { McpClient } from '../packages/mcp-client/dist/index.js'
-import { Meter, formatBytes, estimateTokens } from '../packages/meter/dist/index.js'
+import {
+  BYTES_PER_TOKEN_BAND,
+  Meter,
+  estimateTokenBand,
+  formatBytes,
+} from '../packages/meter/dist/index.js'
 
 const REPOS = [
   'apify/apify-mcp-server',
@@ -15,15 +20,14 @@ const c = new McpClient({ url: 'https://mcp.deepwiki.com/mcp', name: 'DeepWiki',
 await c.connect()
 
 console.log(
-  `${'repo'.padEnd(34)} ${'wire'.padStart(10)} ${'text'.padStart(10)} ${'~tok@3.8'.padStart(10)} ${'~tok@3.3'.padStart(10)}  % of 200K`,
+  `${'repo'.padEnd(34)} ${'wire'.padStart(10)} ${'text'.padStart(10)} ${`~tok@${BYTES_PER_TOKEN_BAND.low}`.padStart(10)} ${`~tok@${BYTES_PER_TOKEN_BAND.high}`.padStart(10)}  % of 200K`,
 )
 const rows = []
 for (const repo of REPOS) {
   try {
     await c.callTool('read_wiki_contents', { repoName: repo })
     const r = meter.records.at(-1)
-    const lo = Math.round(r.textBytes / 3.8),
-      hi = Math.round(r.textBytes / 3.3)
+    const { low: lo, high: hi } = estimateTokenBand(r.textBytes)
     rows.push({ repo, ...r, lo, hi })
     console.log(
       `${repo.padEnd(34)} ${formatBytes(r.wireBytes).padStart(10)} ${formatBytes(r.textBytes).padStart(10)} ${lo.toLocaleString().padStart(10)} ${hi.toLocaleString().padStart(10)}  ${((lo / 200000) * 100).toFixed(0)}-${((hi / 200000) * 100).toFixed(0)}%`,
@@ -34,5 +38,5 @@ for (const repo of REPOS) {
 }
 const t = meter.totals
 console.log(
-  `\nAll ${rows.length} in one context: text=${formatBytes(t.textBytes)}  ~${estimateTokens(t.textBytes).toLocaleString()} tok  = ${(estimateTokens(t.textBytes) / 200000).toFixed(1)}x a 200K window`,
+  `\nAll ${rows.length} in one context: text=${formatBytes(t.textBytes)}  ~${estimateTokenBand(t.textBytes).low.toLocaleString()} to ${estimateTokenBand(t.textBytes).high.toLocaleString()} tok  = ${(estimateTokenBand(t.textBytes).low / 200000).toFixed(1)}x to ${(estimateTokenBand(t.textBytes).high / 200000).toFixed(1)}x a 200K window`,
 )

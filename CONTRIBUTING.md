@@ -39,7 +39,7 @@ worthless.
 1. **Wire bytes are not context bytes.** SSE framing and JSON escaping roughly
    double the wire size. Use `textBytes` for anything about a context window.
    Label a wire figure as `wire`.
-2. **Token figures are estimates.** Show a band of 3.3 to 3.8 bytes per token.
+2. **Token figures are estimates.** Show a band of 2.4 to 3.8 bytes per token, from `BYTES_PER_TOKEN_BAND` in `packages/meter`.
    Never print one confident token number. Mark it as an estimate where it is
    displayed, not only in a footnote.
 3. **Billed tokens stay in their own column.** They come from the harness. Never

@@ -15,7 +15,7 @@ import { writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { McpClient, SERVERS } from '../packages/mcp-client/dist/index.js'
-import { Meter, utf8Bytes } from '../packages/meter/dist/index.js'
+import { BYTES_PER_TOKEN_BAND, Meter, utf8Bytes } from '../packages/meter/dist/index.js'
 import { toolTableFrom } from '../packages/runtime/dist/index.js'
 import { runInNodeSandbox } from '../packages/runtime/dist/node.js'
 import { generateSurface, schemaSurfaceBytes } from '../packages/typegen/dist/index.js'
@@ -29,12 +29,13 @@ const taskId = process.argv[2] ?? 'table-heavy-page'
 const WINDOW_TOKENS = 200_000
 
 /**
- * Bytes per token, as a band.
+ * Bytes per token, as a band, from packages/meter.
  *
  * This repo ships no tokenizer and will not print a single confident token number.
- * 3.8 is the generous end (fewest tokens for the bytes) and 3.3 the pessimistic one.
+ * `low` is the generous end (fewest tokens for the bytes) and `high` the measured
+ * one. A recording carries the band it was derived with.
  */
-const BAND = { low: 3.8, high: 3.3 }
+const BAND = { ...BYTES_PER_TOKEN_BAND }
 
 const task = await loadTask(TASKS, taskId)
 const spec = SERVERS.find((s) => s.id === Object.keys(task.servers)[0])

@@ -4,7 +4,7 @@
   "servers": {
     "deepwiki": ["read_wiki_contents"]
   },
-  "why": "Three payloads, 1,393,773 bytes (1.33 MiB) of text, about 367,000 to 422,000 estimated tokens, and an answer of about 300 bytes. The direct arm cannot hold even the first two dumps. The rule needs page bodies, not page names, so the cheap structure tool cannot shortcut it.",
+  "why": "Three payloads, 1,393,773 bytes (1.33 MiB) of text, about 367,000 to 581,000 estimated tokens, and an answer of about 300 bytes. The direct arm cannot hold even the first two dumps. The rule needs page bodies, not page names, so the cheap structure tool cannot shortcut it.",
   "expectCodeModeWins": true,
   "extraArms": ["A-files"],
   "extraArmsWhy": "Every dump is over Claude Code's MCP output limit, so the direct arms that every sweep runs never see the data. A-files can open the files Claude Code writes. A-raw raises the limit, so the dumps enter the window and their cost is counted. Added 2026-09-22. A-raw was removed on 2026-09-22, before any run of it completed: the largest dump is 700,150 characters, over the 500,000 character ceiling Claude Code puts on any one tool result, so no setting can put it in the window.",
@@ -14,7 +14,7 @@
   },
   "timeoutMs": 300000,
   "mayNotComplete": ["A-uncached", "A-cached", "A-files"],
-  "mayNotCompleteWhy": "1,393,773 bytes of text is about 367,000 to 422,000 estimated tokens. Each dump is over Claude Code's 25,000 token MCP output limit, so A-uncached and A-cached get file paths they have no tool to open. A-raw puts the dumps in the window: more than a 200K window holds, and within a 1M window only if the client grants one. A-files may run out of turns paging three files. Each outcome is a measurement. Rewritten 2026-09-22: the first version said the direct arm cannot hold the dumps in its window, but the run showed the output limit stops it first.",
+  "mayNotCompleteWhy": "1,393,773 bytes of text is about 367,000 to 581,000 estimated tokens. Each dump is over Claude Code's 25,000 token MCP output limit, so A-uncached and A-cached get file paths they have no tool to open. A-raw puts the dumps in the window: more than a 200K window holds, and within a 1M window only if the client grants one. A-files may run out of turns paging three files. Each outcome is a measurement. Rewritten 2026-09-22: the first version said the direct arm cannot hold the dumps in its window, but the run showed the output limit stops it first.",
   "expect": {
     "mustMention": [
       "Interactive Playground",

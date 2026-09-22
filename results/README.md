@@ -56,13 +56,18 @@ times input, a cache write at 1.25x and a cache read at 0.1x. A subscription run
 not billed per token, so no such figure is a cost somebody paid, and the summary
 labels it that way.
 
-**Estimates** are derived from a byte count at 3.3 to 3.8 bytes per token. They are
+**Estimates** are derived from a byte count at 2.4 to 3.8 bytes per token. They are
 always printed as a band, never as a single figure, and always with the word
-estimate beside it. They appear outside this directory, never inside it. The
-2026-09-22 sweeps check the band once: `A-raw` on `one-big-payload` puts one result of
-392,601 bytes into an otherwise unchanged prompt, and the prompt grew by about
-163,900 tokens on both claude-sonnet-5 and claude-opus-5. That is 2.4 bytes per
-token, so the band is generous.
+estimate beside it. They appear outside this directory, with one exception: a
+recording carries the band it used and the estimates it derived. The high end of the
+band is measured. `A-raw` on `one-big-payload` puts one result of 392,601 bytes into
+an otherwise unchanged prompt, and on 2026-09-22 the prompt grew by about 163,900
+tokens on both claude-sonnet-5 and claude-opus-5. That is 2.4 bytes per token. The
+band used to end at 3.3.
+
+`recording-table-heavy-page.json` was derived again at the new band on 2026-09-22.
+Only `bytesPerTokenBand.high` and the three figures derived from it changed. Its
+byte counts, timings and events are as recorded on 2026-09-21.
 
 Never average one kind with another.
 

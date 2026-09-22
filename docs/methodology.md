@@ -44,8 +44,9 @@ SDK and reads the usage the API counted off the final result message. They are
 exact for that run, and they are reported in their own columns.
 
 **Estimated tokens** are everything else. This repository ships no tokenizer, so
-`estimateTokens(bytes)` divides by `BYTES_PER_TOKEN_ESTIMATE = 3.8`, and display
-code widens that to a band of 3.3 to 3.8 bytes per token.
+`estimateTokens(bytes)` divides by `BYTES_PER_TOKEN_ESTIMATE = 3.8`, the generous
+end, and display code widens that to a band of 2.4 to 3.8 bytes per token,
+`BYTES_PER_TOKEN_BAND` in `packages/meter`.
 
 Rules the repo holds itself to:
 
@@ -53,12 +54,13 @@ Rules the repo holds itself to:
 2. An estimate is always labelled as an estimate at the point it is shown.
 3. A billed number is never averaged with an estimate.
 
-The band is not calibrated for the model the harness runs. Claude models from 4.7
-on use a tokenizer that makes up to about a third more tokens from the same text,
-so for claude-opus-5 the true ratio is likely below 3.3 bytes per token. That makes
-every estimate here low, never high. The free `count_tokens` endpoint of the
-Anthropic API gives the exact count for a given model, and calibrating the band
-with it is open work.
+The high end of the band is measured. On 2026-09-22 the `A-raw` arm put one result
+of 392,601 bytes into an otherwise unchanged prompt, and the prompt grew by 163,895
+tokens on claude-sonnet-5 and by 163,861 on claude-opus-5: 2.4 bytes per token.
+Until then the band ended at 3.3, and every estimate for these models was too low.
+One payload is one data point. The free `count_tokens` endpoint of the Anthropic API
+gives the exact count for a given model, and checking other payloads with it is open
+work.
 
 If you need exact counts for another model today,
 [`mcp-context-cost`](https://github.com/athakur3/mcp-context-cost) runs a real
@@ -93,6 +95,11 @@ nodejs/undici                       571.1 KiB  274.4 KiB     73,944     85,148  
 
 All 7 in one context: text=3.66 MiB  ~1,010,267 tok  = 5.1x a 200K window
 ```
+
+That output used the old band, 3.3 to 3.8 bytes per token. At 2.4 to 3.8 the
+right-hand column reads 98-155%, 92-146%, 76-120%, 54-86%, 52-82%, 96-152% and
+37-59%, and all seven together are 5.1x to 8.0x a 200K window. The script prints the
+new band now.
 
 ## Definition sizes
 
@@ -300,11 +307,10 @@ cost ceiling. No crossover has run yet.
 
 ## Known limits
 
-- **No tokenizer.** Every token figure outside `results/` is an estimate. One billed
-  count checks the band: on 2026-09-22 a result of 392,601 bytes grew the prompt by
-  163,895 tokens on claude-sonnet-5 and by 163,861 on claude-opus-5, about 2.4 bytes
-  per token. The band of 3.3 to 3.8 is generous for these models, so every estimate
-  is too low.
+- **No tokenizer.** Every token figure outside `results/` is an estimate. The high
+  end of the band, 2.4 bytes per token, comes from one billed count on one
+  payload, the same for claude-sonnet-5 and claude-opus-5. Other text may tokenize
+  differently.
 - **The uncached arms are not always uncached.** With claude-sonnet-5 and Claude
   Code 2.1.278, 35 of 55 runs of an uncached arm read the cache. With claude-opus-5,
   none of 22 did. See [Cost at list price](#cost-at-list-price).

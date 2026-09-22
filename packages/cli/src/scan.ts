@@ -1,5 +1,5 @@
 import { McpClient, type McpTool } from '@codemode-lab/mcp-client'
-import { Meter, formatBytes, utf8Bytes } from '@codemode-lab/meter'
+import { Meter, estimateTokenBand, formatBytes, utf8Bytes } from '@codemode-lab/meter'
 import { generateSurface, schemaSurfaceBytes } from '@codemode-lab/typegen'
 
 /**
@@ -148,15 +148,13 @@ export function verdict(report: ScanReport, windowTokens = 200_000): string {
   const biggest = report.probes.filter((p) => !p.error).sort((a, b) => b.textBytes - a.textBytes)[0]
   if (!biggest) return `${report.server}: ${report.toolCount} tools, no payload probed.`
 
-  const lo = Math.round(biggest.textBytes / 3.8)
-  const hi = Math.round(biggest.textBytes / 3.3)
+  const { low: lo, high: hi } = estimateTokenBand(biggest.textBytes)
   const pctLo = Math.round((lo / windowTokens) * 100)
   const pctHi = Math.round((hi / windowTokens) * 100)
 
   // A band here too. "About 402 tokens" was one confident number, which is the
   // thing this repo says it never prints.
-  const defLo = Math.round(report.schemaBytes / 3.8)
-  const defHi = Math.round(report.schemaBytes / 3.3)
+  const { low: defLo, high: defHi } = estimateTokenBand(report.schemaBytes)
   const defPct = Math.round((defLo / windowTokens) * 100)
 
   // Two shapes of server, and the ratio only reads well in one of them. DeepWiki's

@@ -310,8 +310,8 @@ describe.skipIf(!process.env.LIVE)('live servers', () => {
     await client.callTool('read_wiki_contents', { repoName: 'cloudflare/agents' })
 
     const r = meter.records[0]
-    // Text bytes, never wire bytes. At 3.3 to 3.8 bytes per token this is the
-    // 92% to 106% of a 200K window that the README quotes as an estimate.
+    // Text bytes, never wire bytes. At 2.4 to 3.8 bytes per token this is the
+    // 92% to 146% of a 200K window that the README quotes as an estimate.
     expect(r.textBytes).toBeGreaterThan(500_000)
     expect(r.wireBytes).toBeGreaterThan(r.textBytes)
   }, 180_000)

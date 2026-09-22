@@ -182,7 +182,7 @@ returns, as its own term.
 
 This repo does, on live servers, with the commands in the box. One DeepWiki
 `read_wiki_contents` call returned 700,150 bytes (683.7 KiB) of text on
-2026-09-21, which is 92% to 106% of a 200K window and 459 times the whole
+2026-09-21, which is 92% to 146% of a 200K window and 459 times the whole
 definition surface of that server.
 
 Against that term, a 24% smaller schema file is noise, and a 98.7% saving on an

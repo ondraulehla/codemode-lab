@@ -91,8 +91,7 @@ surface now declares the JSON shape a result's text holds, instead of pretending
 the function returns that object.
 
 Total definition surface across the three keyless servers: 11,268 B of tools JSON
-on 2026-09-21 and 11,290 B on 2026-09-22, roughly 3,000 to 3,400 estimated tokens,
-about 1.5% of a 200K window.
+on 2026-09-21 and 11,290 B on 2026-09-22, roughly 3,000 to 4,700 estimated tokens, 1.5% to 2.3% of a 200K window.
 
 ## Payload sizes
 
@@ -101,11 +100,11 @@ report this column.
 
 | server          | tool                           | probe arguments                                              | text returned |        est. tokens |
 | --------------- | ------------------------------ | ------------------------------------------------------------ | ------------: | -----------------: |
-| DeepWiki        | `read_wiki_contents`           | `{ repoName: 'cloudflare/agents' }`                          |     683.7 KiB | 184,250 to 212,167 |
-| DeepWiki        | `read_wiki_structure`          | `{ repoName: 'cloudflare/agents' }`                          |       1.7 KiB |         470 to 541 |
-| Microsoft Learn | `microsoft_docs_search`        | `{ query: 'durable functions orchestration patterns' }`      |      23.6 KiB |     6,365 to 7,329 |
-| Microsoft Learn | `microsoft_code_sample_search` | `{ query: 'azure blob storage upload', language: 'python' }` |      10.3 KiB |     2,777 to 3,198 |
-| Microsoft Learn | `microsoft_docs_fetch`         | a Durable Functions overview URL                             |       2.2 KiB |         601 to 692 |
+| DeepWiki        | `read_wiki_contents`           | `{ repoName: 'cloudflare/agents' }`                          |     683.7 KiB | 184,250 to 291,729 |
+| DeepWiki        | `read_wiki_structure`          | `{ repoName: 'cloudflare/agents' }`                          |       1.7 KiB |         470 to 744 |
+| Microsoft Learn | `microsoft_docs_search`        | `{ query: 'durable functions orchestration patterns' }`      |      23.6 KiB |    6,365 to 10,078 |
+| Microsoft Learn | `microsoft_code_sample_search` | `{ query: 'azure blob storage upload', language: 'python' }` |      10.3 KiB |     2,777 to 4,397 |
+| Microsoft Learn | `microsoft_docs_fetch`         | a Durable Functions overview URL                             |       2.2 KiB |         601 to 952 |
 
 DeepWiki's question tool, `ask_wiki_question` since 2026-09-22 and `ask_question`
 before, is never probed automatically. It spends the provider's money, and
@@ -134,7 +133,6 @@ the environment. A token never goes into a page, because a token in a public pag
 is a token you have given away.
 
 Its own wiki, `apify/apify-mcp-server`, is the largest payload measured anywhere
-in this project: 745,654 bytes (728.2 KiB) of text from one DeepWiki call, 98% to
-113% of a 200K window.
+in this project: 745,654 bytes (728.2 KiB) of text from one DeepWiki call, 98% to 155% of a 200K window.
 
 An unauthenticated `tools/list` POST to `https://mcp.apify.com` returns `401`.

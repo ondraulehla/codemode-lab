@@ -202,7 +202,7 @@ run in the same command as the winners and print the same table.
 
 **3. It keeps billed and estimated tokens apart.** Billed counts come from the
 harness and sit in their own columns. Everything else is a band from byte counts at
-3.3 to 3.8 bytes per token, labelled as an estimate where it is shown.
+2.4 to 3.8 bytes per token, labelled as an estimate where it is shown.
 
 ## What this project does not do yet
 

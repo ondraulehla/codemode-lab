@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  BYTES_PER_TOKEN_BAND,
   BYTES_PER_TOKEN_ESTIMATE,
   Meter,
+  estimateTokenBand,
   estimateTokens,
   formatBytes,
   utf8Bytes,
@@ -129,6 +131,14 @@ describe('estimates and formatting', () => {
     expect(estimateTokens(0)).toBe(0)
     // 728,200 bytes: roughly the measured apify/apify-mcp-server payload.
     expect(estimateTokens(728_200)).toBe(191_632)
+  })
+
+  it('prints a token estimate as a band whose high end was measured', () => {
+    // 2.4 bytes per token: on 2026-09-22 a result of 392,601 bytes grew a
+    // claude-sonnet-5 prompt by 163,895 tokens, and a claude-opus-5 one by 163,861.
+    expect(BYTES_PER_TOKEN_BAND).toEqual({ low: 3.8, high: 2.4 })
+    expect(estimateTokenBand(392_601)).toEqual({ low: 103_316, high: 163_584 })
+    expect(estimateTokenBand(0)).toEqual({ low: 0, high: 0 })
   })
 
   it('formatBytes switches unit at the right boundaries', () => {

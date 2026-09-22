@@ -111,6 +111,26 @@ export function estimateTokens(bytes: number): number {
 }
 
 /**
+ * The band every token estimate in this repo is printed as, in bytes per token.
+ *
+ * `low` gives the low end of a token count (more bytes per token, fewer tokens),
+ * `high` the high end. 3.8 is the generous end, the ratio older tokenizers had on
+ * English markdown and code. 2.4 was measured. On 2026-09-22 the A-raw arm put one
+ * result of 392,601 bytes into an otherwise unchanged prompt, and claude-sonnet-5
+ * and claude-opus-5 both billed about 163,900 tokens for it. The band used to end at
+ * 3.3, which put every estimate for those models too low.
+ */
+export const BYTES_PER_TOKEN_BAND = { low: BYTES_PER_TOKEN_ESTIMATE, high: 2.4 } as const
+
+/** A byte count as a band of estimated tokens, each end rounded. */
+export function estimateTokenBand(bytes: number): { low: number; high: number } {
+  return {
+    low: Math.round(bytes / BYTES_PER_TOKEN_BAND.low),
+    high: Math.round(bytes / BYTES_PER_TOKEN_BAND.high),
+  }
+}
+
+/**
  * Human byte formatting, used by the CLI and the page alike.
  *
  * The units are binary and carry binary names: 1 KiB is 1,024 bytes. This function

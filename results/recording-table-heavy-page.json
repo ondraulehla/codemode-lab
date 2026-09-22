@@ -4,7 +4,7 @@
   "windowTokens": 200000,
   "bytesPerTokenBand": {
     "low": 3.8,
-    "high": 3.3
+    "high": 2.4
   },
   "server": {
     "id": "deepwiki",
@@ -370,11 +370,11 @@
       "intoWindowBytes": 1113302,
       "intoWindowTokens": {
         "low": 292974,
-        "high": 337364
+        "high": 463876
       },
       "windowPercent": {
         "low": 146,
-        "high": 169
+        "high": 232
       },
       "ms": 70812
     }
@@ -473,7 +473,7 @@
       "intoWindowBytes": 1889,
       "intoWindowTokens": {
         "low": 497,
-        "high": 572
+        "high": 787
       },
       "ratio": 3017,
       "ms": 93524

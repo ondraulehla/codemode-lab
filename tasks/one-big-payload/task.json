@@ -15,7 +15,7 @@
   },
   "timeoutMs": 180000,
   "mayNotComplete": ["A-uncached", "A-cached", "A-files", "A-raw"],
-  "mayNotCompleteWhy": "392,601 bytes of text is about 103,000 to 119,000 estimated tokens. That is over Claude Code's 25,000 token MCP output limit, so A-uncached and A-cached get a file path instead of the text, and they have no tool to open a file. A-files can open it, and may run out of turns paging through it. A-raw puts the whole payload in the window and resends it every turn, and may run out of budget. Each outcome is a measurement. Rewritten 2026-09-22: the first version said the payload might not fit a 200K window, but the run showed the output limit stops it first.",
+  "mayNotCompleteWhy": "392,601 bytes of text is about 103,000 to 164,000 estimated tokens. That is over Claude Code's 25,000 token MCP output limit, so A-uncached and A-cached get a file path instead of the text, and they have no tool to open a file. A-files can open it, and may run out of turns paging through it. A-raw puts the whole payload in the window and resends it every turn, and may run out of budget. Each outcome is a measurement. Rewritten 2026-09-22: the first version said the payload might not fit a 200K window, but the run showed the output limit stops it first.",
   "expect": {
     "mustMention": ["Filesystem Tools Reference", "Tool Categories and Organization"],
     "note": "Both strings are DeepWiki's own page and heading names, not repository text. GitHub code search returns zero hits for them inside modelcontextprotocol/servers, so a model cannot produce them from memory. Neither appears in the question: it says 'two hash marks and a space' rather than printing the marker. Margin: 18 code blocks against 15, then a cliff to 5."

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
-import { formatBytes } from '@codemode-lab/meter'
+import { BYTES_PER_TOKEN_BAND, estimateTokenBand, formatBytes } from '@codemode-lab/meter'
 import { McpClient, SERVERS } from '@codemode-lab/mcp-client'
 import { generateSurface } from '@codemode-lab/typegen'
 import { scanServer, verdict } from './scan.js'
@@ -60,7 +60,8 @@ function authFor(serverId?: string): { url: string; headers: Record<string, stri
 }
 
 function tokenBand(bytes: number): string {
-  return `${Math.round(bytes / 3.8).toLocaleString()}-${Math.round(bytes / 3.3).toLocaleString()}`
+  const { low, high } = estimateTokenBand(bytes)
+  return `${low.toLocaleString()}-${high.toLocaleString()}`
 }
 
 async function main(): Promise<number> {
@@ -172,7 +173,7 @@ async function main(): Promise<number> {
             console.log(`  ${p.tool.padEnd(30)} ${DIM}not probed: ${p.error.slice(0, 50)}${RESET}`)
             continue
           }
-          const pct = Math.round((p.textBytes / 3.8 / windowTokens) * 100)
+          const pct = Math.round((p.textBytes / BYTES_PER_TOKEN_BAND.low / windowTokens) * 100)
           const bar = '#'.repeat(Math.min(40, Math.max(1, Math.round(pct / 2.5))))
           console.log(
             `  ${p.tool.padEnd(30)} ${formatBytes(p.textBytes).padStart(10)}  ~${tokenBand(p.textBytes)} tok  ${pct}% of window`,
@@ -185,7 +186,7 @@ async function main(): Promise<number> {
 
       console.log(`\n${BOLD}Verdict${RESET}\n  ${verdict(report, windowTokens)}\n`)
       console.log(
-        `${DIM}Token figures are estimates from byte counts at 3.3 to 3.8 bytes per token.`,
+        `${DIM}Token figures are estimates from byte counts at ${BYTES_PER_TOKEN_BAND.high} to ${BYTES_PER_TOKEN_BAND.low} bytes per token.`,
       )
       console.log(
         `This tool does not ship a tokenizer and does not pretend to have measured them.${RESET}\n`,
