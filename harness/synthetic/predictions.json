@@ -1,0 +1,13 @@
+{
+  "recorded": "2026-09-22, before the first crossover run",
+  "author": "Written with the crossover code, before it ever ran. Review and edit these before the first run: once a run exists, they cannot change.",
+  "predictions": [
+    "At one shard and without caching, code mode over A-uncached at list price crosses 1x between 4 and 16 KiB.",
+    "Caching moves that crossing by no more than one size step, either way.",
+    "From 128 KiB up, A-uncached and A-cached never see the data: every result is over the 25,000 token output limit and goes to a file they cannot open.",
+    "A-tool, the direct arm with a server-side filter, is the cheapest arm at every size from 16 KiB up, and answers correctly.",
+    "A-files answers correctly at every size, and costs more than code mode from 64 KiB up.",
+    "A-raw answers wrongly in at least one of three runs at 256 KiB and above, because it counts rows by reading.",
+    "Code mode answers correctly at every size."
+  ]
+}
