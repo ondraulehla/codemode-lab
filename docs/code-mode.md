@@ -121,8 +121,8 @@ result, a small number of calls with small responses, and tools that need user
 feedback between calls.
 
 This repo's `outline-leaves` and `structure-rank` tasks have that shape: a few
-small results. Both were predicted to lose. See the README for how they came out,
-and for why one run cannot settle it.
+small results. Both were predicted to lose. On claude-sonnet-5, with five runs
+each, one came out a tie and the other a clear code mode win. See the README.
 
 ## Bifrost: the published per-query dataset
 

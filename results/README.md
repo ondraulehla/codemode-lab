@@ -20,6 +20,18 @@ CI run keeps its own report for 90 days as an artifact on the workflow run page.
 
 A sweep file is committed by a human after reading it. Nothing in CI writes here.
 
+## The sweeps
+
+| File                                   | Model           | Runs per arm | What ran                                                    |
+| -------------------------------------- | --------------- | -----------: | ----------------------------------------------------------- |
+| `sweep-2026-09-21T19-48-37-498Z.json`  | claude-opus-5   |            1 | every task, the first harness. See the faults below.        |
+| `sweep-2026-09-22T19-21-18-555Z.json`  | claude-sonnet-5 |            5 | every task and arm. `latest.json` is this sweep.            |
+| `sweep-2026-09-22T21-08-18-316Z.json`  | claude-opus-5   |            2 | `one-big-payload`, every arm, `A-files` and `A-raw` included |
+| `sweep-2026-09-22T21-16-03-133Z.json`  | claude-opus-5   |            2 | the other four tasks, the four arms without file tools      |
+
+Each has a `summary-<run-id>.json` beside it. The two claude-opus-5 files are one
+check, split in two so the expensive arms ran on one task only.
+
 ## Every published number carries its provenance
 
 A figure that cannot be traced back to a run is not a measurement, it is a claim.
@@ -46,7 +58,11 @@ labels it that way.
 
 **Estimates** are derived from a byte count at 3.3 to 3.8 bytes per token. They are
 always printed as a band, never as a single figure, and always with the word
-estimate beside it. They appear outside this directory, never inside it.
+estimate beside it. They appear outside this directory, never inside it. The
+2026-09-22 sweeps check the band once: `A-raw` on `one-big-payload` puts one result of
+392,601 bytes into an otherwise unchanged prompt, and the prompt grew by about
+163,900 tokens on both claude-sonnet-5 and claude-opus-5. That is 2.4 bytes per
+token, so the band is generous.
 
 Never average one kind with another.
 
@@ -99,9 +115,21 @@ So the honest claim is narrower than "code mode wins". The claim is:
 **A payload that does not fit has to be processed somewhere other than the context
 window. Code mode is one way to do that. Claude Code's own spill-to-disk plus file
 tools is another.** The first sweep removed the second option. The arms `A-files`
-and `A-raw` put it back and measure it, and their predictions were written down
-before their first run.
+and `A-raw` put it back, and their predictions were written down before their first
+run.
 
-What the numbers do show, and this part is not an artifact: on the same question,
-with the same model, the code mode arm answered correctly on 8,788 input tokens
-where the direct arm used 53,416 and did not reach the data.
+The 2026-09-22 sweep ran them, five times each, on claude-sonnet-5. Both reach the
+data, and both pay for it. On `table-heavy-page`, `A-files` used 1,683,743 prompt
+tokens in its median run and answered correctly in 2 runs of 5. Code mode answered
+correctly in all 10 of its runs, on about 5,500 prompt tokens each. At list price
+the direct arms that reach the data cost 12 to 63 times as much as code mode.
+
+## Known faults in the 2026-09-22 sweep
+
+`sweep-2026-09-22T19-21-18-555Z.json` is kept as it was written, like the first.
+
+- In 35 of 55 runs, an uncached arm read the prompt cache all the same. Each such
+  run carries `cacheLeak` with the tokens it read and wrote. The summary compares
+  prompt tokens, so the token ratios stand; the uncached price ratios are noisier.
+- A run that ran out of turns is counted as wrong in `classes`. Three `A-files` runs
+  on `table-heavy-page` did: they used all 40 turns without an answer.

@@ -59,64 +59,115 @@ term, call by call, on public servers. That is what this repository adds.
 ## What I measured
 
 Five questions, each asked twice: once by an agent calling tools directly, once by
-an agent writing a program. Same model, same question, same tools.
+an agent writing a program. Same model, same question, same tools. Each approach
+runs as two arms, one with the prompt cache and one without.
 
 The prediction for each was written down **before** the run.
 
-| task               |           direct |   code mode | list price, uncached | list price, cached | predicted       |
-| ------------------ | ---------------: | ----------: | -------------------: | -----------------: | --------------- |
-| `table-heavy-page` | 53,416 ✗ no data | **8,788** ✓ |                 0.19 |               0.35 | code mode wins  |
-| `one-big-payload`  | 26,179 ✗ no data | **8,879** ✓ |                 0.38 |               0.46 | code mode wins  |
-| `topic-overlap`    |   11,085 ✗ wrong | **9,600** ✓ |                 1.08 |               0.68 | _uncertain_     |
-| `structure-rank`   |      **8,133** ✓ |     8,275 ✓ |                 1.05 |           **0.65** | code mode loses |
-| `outline-leaves`   |      **5,665** ✓ |     5,860 ✓ |                 1.15 |               1.30 | code mode loses |
+| task               |          direct |    code mode | list price, uncached | list price, cached | predicted       | held               |
+| ------------------ | --------------: | -----------: | -------------------: | -----------------: | --------------- | ------------------ |
+| `table-heavy-page` | 7,105 ✗ no data |  **5,715** ✓ |                 0.67 |               0.76 | code mode wins  | yes                |
+| `one-big-payload`  | 5,458 ✗ no data |  **5,456** ✓ |                 0.98 |               0.86 | code mode wins  | yes                |
+| `topic-overlap`    |        10,717 ✓ | **10,456** ✓ |                 0.96 |               1.06 | _uncertain_     | no verdict         |
+| `structure-rank`   |         7,769 ✓ |  **5,039** ✓ |             **0.31** |           **0.30** | code mode loses | no                 |
+| `outline-leaves`   |         5,297 ✓ |  **5,269** ✓ |                 1.04 |               0.72 | code mode loses | on list price only |
 
-The first two columns are input tokens counted by the Anthropic API, uncached arms.
-The list price columns divide what code mode cost by what the direct arm cost, so
+The first two columns are prompt tokens counted by the Anthropic API for the
+uncached arms: input, cache reads and cache writes together, the median of five
+runs. A tick or a cross is the answer most of the five runs gave. The list price
+columns divide what code mode cost by what the direct arm cost, run by run, so
 below 1 means code mode was cheaper. They weight output at five times input and
 cache reads at a tenth, from [harness/prices.mjs](harness/prices.mjs). They are an
-equivalent of the billed tokens, not a bill. claude-opus-5, effort low, 2026-09-21,
-**one run per arm**.
+equivalent of the billed tokens, not a bill. claude-sonnet-5, effort low,
+2026-09-22, **five runs per arm**. Code mode answered correctly in all 50 of its
+runs.
 
-**One run is not a result.** The two predicted losses held on input tokens, by 3.4%
-and 1.7%. At list price the gaps are 15% and 5%, because a program is output, and
-output costs more. With caching on, `structure-rank` went the other way: code mode
-was 35% cheaper. One run cannot tell those apart from noise, so the next sweep runs
-every arm five times.
+**Where the data fits, the arms are close.** On `outline-leaves` the prompts are
+within 1% of each other. On `topic-overlap` they are within 3%, and the direct arm
+was right in 9 runs of 10.
+
+**One predicted loss was a clear win.** On `structure-rank` code mode used 35% fewer
+prompt tokens and cost 31% of the direct arm's list price. The direct arm read four
+outlines into its window and wrote about three times as many output tokens, 854
+against 293. On the first sweep, 2026-09-21 on claude-opus-5 with one run, this task was a narrow
+loss for code mode. The check on claude-opus-5 below, with the current harness,
+found the same clear win as claude-sonnet-5, so that loss came from the harness the
+first sweep ran on, not from the model. Two of the four directional predictions held
+on prompt tokens.
+
+The first sweep is kept in `results/` as it was written. Its table said the same
+about the two large tasks and the opposite about `structure-rank`.
 
 ## Why the direct arm failed
 
-On the two large tasks the direct arm stopped and said so:
+On the two large tasks the direct arm never saw the data. On the first sweep it
+stopped and said so:
 
 > "All three dumps were fetched successfully but each exceeds the output token
 > limit, so they were written to files under /tmp/... I'm blocked and need your
 > input."
 
-It did not invent an answer. The mechanism matters more than it first looks.
-claude-opus-5 has a 1M token window, so the window did not stop it. Claude Code
-did: it writes any MCP result over
-[25,000 tokens](https://code.claude.com/docs/en/mcp) to a file and gives the model
-the path. This harness removes every built-in tool, so the arm had no way to open
-the file.
+It did not invent an answer. The window did not stop it. Claude Code did: it writes
+any MCP result over [25,000 tokens](https://code.claude.com/docs/en/mcp) to a file
+and gives the model the path. `A-uncached` and `A-cached` have no built-in tools, so
+they cannot open the file.
 
-So read those two rows narrowly. Code mode reached the data and the direct arm did
-not. That is not yet a measurement of what carrying the data in the window costs.
+A normal session could. So the 2026-09-22 sweep adds two direct arms that do reach
+the data. `A-files` keeps Read and Grep. `A-raw` goes through a proxy that raises
+the limit, so the whole result lands in its window.
 
-`topic-overlap` is different. Its payloads are small, the direct arm read every
-one, and it still got the counts wrong. A set intersection done by reading is less
-reliable than one done by a program. That is a finding about accuracy, not tokens.
+| task               | direct arm |    direct | code mode | right, direct | right, code mode | direct ÷ code mode, list price |
+| ------------------ | ---------- | --------: | --------: | ------------: | ---------------: | -----------------------------: |
+| `one-big-payload`  | `A-files`  |   163,814 |     5,531 |        3 of 5 |           5 of 5 |                12x (6x to 21x) |
+| `one-big-payload`  | `A-raw`    |   168,548 |     5,456 |        4 of 5 |           5 of 5 |               28x (26x to 30x) |
+| `table-heavy-page` | `A-files`  | 1,683,743 |     5,347 |        2 of 5 |           5 of 5 |               63x (28x to 79x) |
+
+Prompt tokens, the median of five runs. `A-files` is paired with the code mode arm
+that caches, `A-raw` with the one that does not. `A-files` reads the file in parts,
+and every part stays in the prompt of every later turn. On `table-heavy-page` it
+ran out of turns, at 40, in three runs of five.
+
+`topic-overlap` was different on the first sweep. Its payloads are small, the direct
+arm read every one, and it still got the counts wrong. With five runs on
+claude-sonnet-5 it was right in 9 of 10. In the check on claude-opus-5 it was wrong
+in all 4 runs, and code mode was right in all 4. That finding holds for one model
+and not for the other.
+
+## A check on claude-opus-5
+
+The same harness, the same tasks, two runs per arm, 2026-09-22. `A-files` and
+`A-raw` ran on `one-big-payload` only, to keep the check small.
+
+| task               |           direct |   code mode | list price, uncached | list price, cached | right, direct | right, code mode |
+| ------------------ | ---------------: | ----------: | -------------------: | -----------------: | ------------: | ---------------: |
+| `table-heavy-page` | 51,742 ✗ no data | **5,112** ✓ |                 0.10 |               0.22 |        0 of 4 |           4 of 4 |
+| `one-big-payload`  | 34,677 ✗ no data | **4,997** ✓ |                 0.14 |               0.25 |        0 of 4 |           4 of 4 |
+| `topic-overlap`    |   10,534 ✗ wrong | **9,383** ✓ |                 0.80 |               0.93 |        0 of 4 |           4 of 4 |
+| `structure-rank`   |          7,585 ✓ | **4,836** ✓ |                 0.55 |               0.29 |        4 of 4 |           4 of 4 |
+| `outline-leaves`   |          5,114 ✓ | **5,111** ✓ |                 1.03 |               0.84 |        4 of 4 |           4 of 4 |
+
+Prompt tokens of the uncached arms, the median of two runs. On `one-big-payload`,
+`A-files` answered correctly in both runs on 89,243 prompt tokens and `A-raw` on
+168,366, at about 9 and 27 times the list price of code mode. No uncached run read
+the cache on claude-opus-5.
+
+On cost, the two models agree. On the large tasks the direct arm without file tools
+spends more on claude-opus-5 before it gives up: 9 or 10 turns, where
+claude-sonnet-5 stopped after 2. So on claude-opus-5 code mode is cheaper even
+against an arm that never reached the data.
 
 ## Where it does not pay off
 
-Two of the five tasks exist to lose. Code mode cost 195 and 142 more input tokens
-than calling the tools directly, and more again at list price.
+Two of the five tasks exist to lose. With the current harness neither did, on either
+model: `outline-leaves` is a tie, and `structure-rank` is a clear code mode win,
+because the direct arm counts four outlines in its own output. The first sweep had
+both as narrow losses, on a harness that has been fixed since. Where the data fits
+and there is little to compute, code mode is close to even.
 
-That is not a disaster. It is simply pointless. When the data already fits in the
-window there is nothing to filter, so the program is a round trip you paid for and
-did not need.
-
-If you take one practical thing from this repository, take that one. Code mode is
-for large results, not for tidiness. Other people found the same shape: see
+If you take one practical thing from this repository, take this one. Code mode is
+for results that do not fit, not for tidiness. When a result does not fit, it has
+to be processed outside the window, and a program in a sandbox was the cheaper way
+on every task here. Other people found the same shape: see
 [What others found](#what-others-found).
 
 ## How I know I am not fooling myself
@@ -173,18 +224,18 @@ headline above, and every one would have misled a later reader.
 
 ### The caveat this work earns
 
-Every arm of the 2026-09-21 sweep ran with no file tools. A normal Claude Code
-session keeps them, so it could open the spilled file and grep it, and answer
-without code mode at all.
+Every arm of the 2026-09-21 sweep ran with no file tools, and a normal Claude Code
+session keeps them. The 2026-09-22 sweep answers that caveat with `A-files` and
+`A-raw`: both reach the data, and on these tasks both cost 12 to 63 times as much as
+code mode and were right less often.
 
-Two new arms test exactly that, on the two large tasks. `A-files` can Read and Grep.
-`A-raw` raises the output limit, so the payload lands in the window and its cost is
-counted. Their predictions were written down on 2026-09-22, before either ran.
-They have not run yet.
+The claim this work makes is still a narrow one: **a payload that does not fit has
+to be processed outside the context window. Code mode is one way to do that, and
+not the only one.** A file and a search tool is another. On these two tasks it was
+the expensive one.
 
-Until they do, the narrow claim is the only one this work makes: **a payload that
-does not fit has to be processed outside the context window. Code mode is one way
-to do that, and not the only one.**
+The model is checked once: claude-opus-5, two runs per arm, agrees on cost and
+differs on the accuracy of one task. Both models ran at low effort.
 
 ## What others found
 
@@ -305,8 +356,10 @@ node harness/summarize.mjs results/latest.json
 - **Token counts in `results/` are billed**, read off the API response.
 - **Token counts anywhere else are estimates**, shown as a band at 3.3 to 3.8 bytes
   per token. This repo ships no tokenizer and will not print a single confident
-  token number. The band is not yet calibrated for claude-opus-5, whose tokenizer
-  makes up to about a third more tokens from the same text than older models did.
+  token number. One billed count checks the band: on 2026-09-22, a result of 392,601
+  bytes grew the prompt by 163,895 tokens on claude-sonnet-5 and by 163,861 on
+  claude-opus-5, about 2.4 bytes per token. So for current models the band is
+  generous, and every token estimate here is too low.
 - **Context figures never use wire bytes.** SSE framing and JSON escaping make the
   wire figure roughly twice the text, and only the text reaches a model.
 - **Dollar figures are list-price equivalents**, computed from billed tokens and

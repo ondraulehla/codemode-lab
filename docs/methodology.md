@@ -270,6 +270,13 @@ Input tokens alone hide two things: the output tokens a program costs, and the c
 discount. On the 2026-09-21 sweep they decided a verdict. `structure-rank` lost on
 uncached input tokens, as predicted, and won on cached list price.
 
+On the 2026-09-22 sweep they hid a third. In 35 of 55 runs, an arm set to run with
+the prompt cache off read it all the same, so most of its prompt was billed as cache
+reads, not as input. The harness flags such a run (`cacheLeak`) and keeps it, and
+the summary compares prompt tokens: input, cache reads and cache writes together.
+A leaked run still costs less at list price than a truly uncached one, so the
+uncached price ratios are the noisier ones.
+
 ## Repetitions
 
 A single run cannot separate a 2% difference from noise. The summary reports, per
@@ -278,6 +285,8 @@ arm was correct in every run. Code mode and each direct arm are paired run by ru
 so each ratio compares two runs that hit the live server at about the same time.
 
 The 2026-09-21 sweep has one run per arm. Every conclusion drawn from it says so.
+The 2026-09-22 sweep has five runs per arm on claude-sonnet-5, and a check on
+claude-opus-5 has two.
 
 ## The synthetic crossover
 
@@ -291,13 +300,21 @@ cost ceiling. No crossover has run yet.
 
 ## Known limits
 
-- **No tokenizer.** Every token figure outside `results/` is an estimate, and the
-  band is not calibrated for claude-opus-5.
+- **No tokenizer.** Every token figure outside `results/` is an estimate. One billed
+  count checks the band: on 2026-09-22 a result of 392,601 bytes grew the prompt by
+  163,895 tokens on claude-sonnet-5 and by 163,861 on claude-opus-5, about 2.4 bytes
+  per token. The band of 3.3 to 3.8 is generous for these models, so every estimate
+  is too low.
+- **The uncached arms are not always uncached.** With claude-sonnet-5 and Claude
+  Code 2.1.278, 35 of 55 runs of an uncached arm read the cache. With claude-opus-5,
+  none of 22 did. See [Cost at list price](#cost-at-list-price).
 - **Substring grading.** It cannot credit a correct answer phrased differently.
   The grading strings are chosen so that a paraphrase is unlikely, and every
   failure is read by hand before it is published.
-- **One model, one effort level.** Format effects differ by model, and the published
-  studies show it.
+- **Two models, one effort level.** claude-sonnet-5 with five runs per arm,
+  claude-opus-5 with two. They agree on cost and differ on the accuracy of
+  `topic-overlap`. Format effects differ by model, and the published studies show
+  it.
 - **One sample per probe.** Server responses vary. A second run will differ.
 - **Live servers drift.** DeepWiki regenerates wikis and renames tools. Every table
   prints its measurement date for that reason.
