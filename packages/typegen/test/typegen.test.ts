@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -221,7 +221,9 @@ describe('generateSurface', () => {
   it('reproduces the measured DeepWiki numbers', () => {
     const g = generateSurface('deepwiki', DEEPWIKI_TOOLS)
     expect(schemaSurfaceBytes(DEEPWIKI_TOOLS)).toBe(1526)
-    expect(g.bytes).toBe(1157)
+    // 1,157 B until 2026-09-22, when each function still returned the declared
+    // `{ result: string }`. The runtime hands over a string, so the surface says so.
+    expect(g.bytes).toBe(1103)
     expect(g.warnings).toEqual([])
     expect(g.perTool.map((p) => p.name)).toEqual([
       'ask_question',
@@ -242,6 +244,37 @@ describe('generateSurface', () => {
     const g = generateSurface('cs', [tool])
     expect(g.bytes).toBe(Buffer.byteLength(g.source, 'utf8'))
     expect(g.bytes).toBeGreaterThan(g.source.length)
+  })
+
+  it('returns a plain string for a FastMCP wrapper, because that is what the runtime hands over', () => {
+    // DeepWiki declares `{ result: string }` with x-fastmcp-wrap-result. The runtime
+    // gives the program the text, so a surface that says `{ result: string }` lies,
+    // and a model that believes it writes `.result` on a string.
+    const g = generateSurface('deepwiki', DEEPWIKI_TOOLS)
+    expect(DEEPWIKI_TOOLS.every((t) => t.outputSchema?.['x-fastmcp-wrap-result'] === true)).toBe(
+      true,
+    )
+    expect(g.source).toContain('export function read_wiki_contents(args: {')
+    expect(g.source.match(/Promise<string>/g)).toHaveLength(DEEPWIKI_TOOLS.length)
+    expect(g.source).not.toContain('result: string')
+    expect(g.source).not.toContain('_output')
+  })
+
+  it('names the inner shape when a FastMCP wrapper holds something other than a string', () => {
+    const g = generateSurface('x', [
+      {
+        name: 'list',
+        inputSchema: { type: 'object' },
+        outputSchema: {
+          type: 'object',
+          properties: { result: { type: 'array', items: { type: 'number' } } },
+          required: ['result'],
+          'x-fastmcp-wrap-result': true,
+        },
+      },
+    ])
+    expect(g.source).toContain('export type list_output = number[]')
+    expect(g.source).toContain('export function list(): Promise<string>')
   })
 
   it('drops the args parameter for a tool that takes none', () => {
@@ -336,10 +369,132 @@ describe('the generated surface is real TypeScript', () => {
     expect(ok).toBe(true)
   })
 
+  it('declares a named JSON shape but still returns a string for a real output schema', async () => {
+    const g = generateSurface('x', [
+      {
+        name: 'search',
+        inputSchema: { type: 'object' },
+        outputSchema: {
+          type: 'object',
+          properties: { hits: { type: 'array', items: { type: 'string' } } },
+          required: ['hits'],
+        },
+      },
+    ])
+    expect(g.source).toContain('export function search(): Promise<string>')
+    expect(g.source).toContain('export type search_output = {')
+    expect(g.source).toContain('hits: string[]')
+    expect((await typeChecks(g.source)).ok).toBe(true)
+  })
+
   it('a surface that did not escape a comment would be caught by this check', async () => {
     // Proof the compile step can fail. If this passed, the two tests above prove nothing.
     const broken =
       'declare namespace x {\n  /** oops */ and more */\n  export function a(): void\n}\n'
     expect((await typeChecks(broken)).ok).toBe(false)
+  })
+})
+
+/**
+ * Type-check a task's reference program against the surface the model would read.
+ *
+ * The reference programs are the ground truth for what the runtime hands a program:
+ * they were run against the live server and they work. A surface they do not
+ * type-check against is a surface that lies to the model. This is the check that
+ * would have caught the `{ result: string }` bug before a sweep paid for it.
+ */
+async function programTypeChecks(
+  surface: string,
+  program: string,
+): Promise<{ ok: boolean; output: string }> {
+  const dir = await mkdtemp(join(tmpdir(), 'codemode-program-'))
+  tempDirs.push(dir)
+  await writeFile(join(dir, 'surface.d.ts'), surface, 'utf8')
+  // The sandbox gives a program console.log and nothing else of the host.
+  await writeFile(
+    join(dir, 'globals.d.ts'),
+    'declare const console: { log(...args: unknown[]): void }\n',
+    'utf8',
+  )
+  // A program uses top level await and return, as the sandbox allows. Wrapping it
+  // in an async function is what the sandbox does too.
+  await writeFile(
+    join(dir, 'program.js'),
+    `// @ts-check\nasync function __program() {\n${program}\n}\n`,
+    'utf8',
+  )
+  const tsc = fileURLToPath(new URL('../../../node_modules/typescript/bin/tsc', import.meta.url))
+  try {
+    await run(
+      process.execPath,
+      [
+        tsc,
+        '--noEmit',
+        '--strict',
+        '--allowJs',
+        '--checkJs',
+        '--target',
+        'ES2022',
+        '--lib',
+        'ES2022',
+        '--typeRoots',
+        dir,
+        join(dir, 'surface.d.ts'),
+        join(dir, 'globals.d.ts'),
+        join(dir, 'program.js'),
+      ],
+      { cwd: dir },
+    )
+    return { ok: true, output: '' }
+  } catch (err) {
+    const e = err as { stdout?: string; stderr?: string }
+    return { ok: false, output: `${e.stdout ?? ''}${e.stderr ?? ''}` }
+  }
+}
+
+const TASKS_DIR = fileURLToPath(new URL('../../../tasks/', import.meta.url))
+const TASK_IDS = readdirSync(TASKS_DIR, { withFileTypes: true })
+  .filter((e) => e.isDirectory())
+  .map((e) => e.name)
+
+describe('every reference program type-checks against the surface the model reads', () => {
+  it('finds the tasks', () => {
+    expect(TASK_IDS.length).toBeGreaterThan(0)
+  })
+
+  for (const id of TASK_IDS) {
+    it(`tasks/${id}/program.js`, async () => {
+      const task = JSON.parse(readFileSync(join(TASKS_DIR, id, 'task.json'), 'utf8')) as {
+        servers: Record<string, string[]>
+      }
+      // Only DeepWiki has a captured tools/list. A task on another server needs its
+      // own fixture before this check can cover it, and the test says so.
+      expect(Object.keys(task.servers)).toEqual(['deepwiki'])
+      const allowed = DEEPWIKI_TOOLS.filter((t) => task.servers.deepwiki.includes(t.name))
+      expect(allowed.map((t) => t.name).sort()).toEqual([...task.servers.deepwiki].sort())
+
+      const program = readFileSync(join(TASKS_DIR, id, 'program.js'), 'utf8')
+      const { ok, output } = await programTypeChecks(
+        generateSurface('deepwiki', allowed).source,
+        program,
+      )
+      expect(output).toBe('')
+      expect(ok).toBe(true)
+    })
+  }
+
+  it('fails a program that trusts a result shape the runtime does not deliver', async () => {
+    // Proof the check can fail. This is the program a model wrote against the old
+    // surface, which promised `{ result: string }`.
+    const program =
+      "const dump = await deepwiki.read_wiki_contents({ repoName: 'a/b' })\n" +
+      'return dump.result.split("\\n").length\n'
+    const surface = generateSurface(
+      'deepwiki',
+      DEEPWIKI_TOOLS.filter((t) => t.name === 'read_wiki_contents'),
+    ).source
+    const { ok, output } = await programTypeChecks(surface, program)
+    expect(ok).toBe(false)
+    expect(output).toContain("Property 'result' does not exist on type 'string'")
   })
 })

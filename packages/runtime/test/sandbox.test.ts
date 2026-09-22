@@ -141,7 +141,7 @@ describe('boundary accounting', () => {
   })
 
   it('lets a megabyte in and only ten bytes out', async () => {
-    // The whole project in one test. The tool hands the program 1 MB. The program
+    // The whole project in one test. The tool hands the program 1 MiB. The program
     // filters it and returns a short answer. Only the answer crosses back.
     const big = 'x'.repeat(1024 * 1024)
     const tools: ToolTable = { 'deepwiki.read_wiki_contents': async () => big }
@@ -160,7 +160,7 @@ describe('boundary accounting', () => {
     expect(Math.round(r.in / r.returnedBytes)).toBeGreaterThan(50_000)
   })
 
-  it('counts each of four payloads once, the cross-repo-scan shape', async () => {
+  it('counts each of four payloads once, the shape of a fan-out task', async () => {
     const page = 'y'.repeat(250_000)
     const tools: ToolTable = { 'deepwiki.read_wiki_contents': async () => page }
     const r = await runProgram(
@@ -425,5 +425,26 @@ describe('toolTableFrom', () => {
     }
     const table = toolTableFrom({ s: client }, { s: ['t'] })
     expect(await table['s.t']({})).toBe('one\ntwo')
+  })
+
+  it('prefers the text over structured content, so a FastMCP wrapper arrives as the string', async () => {
+    // DeepWiki's shape: structuredContent wraps the text as { result }. The program
+    // must get the text itself, which is what the generated surface promises.
+    const client = {
+      callTool: async () => ({
+        content: [{ type: 'text', text: '# Page: One' }],
+        structuredContent: { result: '# Page: One' },
+      }),
+    }
+    const table = toolTableFrom({ s: client }, { s: ['t'] })
+    expect(await table['s.t']({})).toBe('# Page: One')
+  })
+
+  it('falls back to the structured content as JSON when a result has no text', async () => {
+    const client = {
+      callTool: async () => ({ content: [], structuredContent: { hits: ['a', 'b'] } }),
+    }
+    const table = toolTableFrom({ s: client }, { s: ['t'] })
+    expect(await table['s.t']({})).toBe('{"hits":["a","b"]}')
   })
 })

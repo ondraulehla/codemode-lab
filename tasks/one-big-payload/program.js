@@ -20,5 +20,9 @@ for (const page of pages) {
   }
 }
 
+// A dump with no page markers means the format changed. Fail loudly: a quiet null
+// would read as an answer.
+if (!best) throw new Error(`no '# Page:' markers in ${dump.length} chars`)
+
 console.log(`${pages.length} pages scanned, ${dump.length} chars`)
 return best

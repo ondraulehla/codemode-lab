@@ -1,4 +1,4 @@
-// Three dumps, 1.39 MB in, about 300 bytes out.
+// Three dumps, 1,393,773 bytes (1.33 MiB) in, about 300 bytes out.
 //
 // The three payloads are fetched concurrently and scanned inside the sandbox. None
 // of them ever reaches the model.
@@ -18,6 +18,10 @@ const results = await Promise.all(
         best = { title, rows: rows.length, evidence: rows[0] ?? null }
       }
     }
+
+    // A dump with no page markers means the format changed. Fail loudly: a quiet
+    // null would read as an answer.
+    if (!best) throw new Error(`${repo}: no '# Page:' markers in ${dump.length} chars`)
 
     console.log(`${repo}: ${dump.length} chars, ${pages.length} pages, top page ${best.rows} rows`)
     return { repo, ...best }

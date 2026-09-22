@@ -7,7 +7,7 @@ import type { FailureClass, RunResult, SandboxToHost, ToolTable } from './protoc
  * It is transport-agnostic on purpose: the iframe and the worker differ only in
  * how bytes move, not in what the accounting means. Every tool call that crosses
  * this boundary is measured here, and `RunResult.value` is the only thing that
- * comes back, which is the claim the demo is built to make visible.
+ * comes back, which is the claim the project is built to make visible.
  */
 export interface BridgeOptions {
   tools: ToolTable
@@ -19,7 +19,7 @@ export interface BridgeOptions {
    *
    * Filtering in the transport only was not enough: logs were pushed here first,
    * so the callback stream was clean while `result.logs` still began with the
-   * handshake. Anything reading the result, including the demo page, showed it as
+   * handshake. Anything reading the result, including a page, showed it as
    * the program's first line of output.
    */
   internalLogs?: string[]
@@ -163,7 +163,12 @@ function safeJson(v: unknown): string {
 export function toolTableFrom(
   servers: Record<
     string,
-    { callTool(name: string, args: Record<string, unknown>): Promise<{ content: unknown[] }> }
+    {
+      callTool(
+        name: string,
+        args: Record<string, unknown>,
+      ): Promise<{ content: unknown[]; structuredContent?: unknown }>
+    }
   >,
   allow?: Record<string, string[]>,
 ): ToolTable {
@@ -180,9 +185,23 @@ export function toolTableFrom(
   return table
 }
 
-function extractPlainText(res: { content: unknown[] }): string {
-  return (res.content as { type: string; text?: string }[])
+/**
+ * The text of a result, which is the one thing a program receives.
+ *
+ * `@codemode-lab/typegen` declares every function as returning a string because of
+ * this function. The two must change together, and a typegen test type-checks every
+ * reference program against the generated surface to hold them to it.
+ *
+ * A result with structured content and no text block is rare, because the spec asks
+ * servers to send the JSON as text too. When it happens, the program gets that JSON
+ * as text rather than an empty string that would read as "nothing found".
+ */
+function extractPlainText(res: { content: unknown[]; structuredContent?: unknown }): string {
+  const texts = ((res.content ?? []) as { type: string; text?: string }[])
     .filter((c) => c.type === 'text' && typeof c.text === 'string')
     .map((c) => c.text as string)
-    .join('\n')
+  if (texts.length === 0 && res.structuredContent !== undefined) {
+    return JSON.stringify(res.structuredContent)
+  }
+  return texts.join('\n')
 }

@@ -26,7 +26,7 @@ export interface TypegenOptions {
 export interface GeneratedSurface {
   /** The .d.ts text. */
   source: string
-  /** UTF-8 byte length, which is the number the demo compares against. */
+  /** UTF-8 byte length, the number compared against the raw tool schemas. */
   bytes: number
   /** One entry per tool, so the UI can show which tool cost what. */
   perTool: { name: string; bytes: number }[]
@@ -168,6 +168,32 @@ function oneLine(s: string): string {
 }
 
 /**
+ * The shape worth naming for a tool's result, if there is one.
+ *
+ * The runtime hands every program the TEXT of a result (`toolTableFrom` in
+ * @codemode-lab/runtime), never the MCP envelope and never `structuredContent`. So
+ * every generated function returns a string, whatever the server declares.
+ *
+ * Returning the declared output schema instead was a real bug. DeepWiki is built on
+ * FastMCP, which wraps a plain string result as `{ result: string }` in its output
+ * schema and marks the wrapper with `x-fastmcp-wrap-result`. The surface promised an
+ * object, the runtime delivered a string, and a model that trusted the types wrote
+ * `.result` on a string, failed, and ran its program again.
+ *
+ * A declared shape still helps when the text is JSON, so it survives as a named type.
+ * A FastMCP wrapper around a plain string has no shape to name: the text is the value.
+ */
+export function outputShape(schema: JsonSchema | undefined): JsonSchema | undefined {
+  if (!schema) return undefined
+  if (schema['x-fastmcp-wrap-result'] === true) {
+    const inner = schema.properties?.result
+    if (!inner || inner.type === 'string') return undefined
+    return inner
+  }
+  return schema
+}
+
+/**
  * Generate the full typed surface for one server's tools.
  *
  * The byte count returned here is the honest cost of the "tool definition tax"
@@ -194,7 +220,8 @@ export function generateSurface(
   for (const tool of tools) {
     const fn = toIdentifier(tool.name)
     const argType = schemaToType(tool.inputSchema, 1, warnings)
-    const ret = tool.outputSchema ? schemaToType(tool.outputSchema, 1, warnings) : 'string'
+    const shape = outputShape(tool.outputSchema)
+    const shapeName = `${fn}_output`
 
     const docParts: string[] = []
     if (includeDescriptions && tool.description) {
@@ -202,14 +229,20 @@ export function generateSurface(
       docParts.push(d.length > maxDescriptionChars ? `${d.slice(0, maxDescriptionChars)}...` : d)
     }
     if (tool.name !== fn) docParts.push(`MCP tool name: ${tool.name}`)
+    if (shape)
+      docParts.push(`Resolves to text. When the text is JSON, it has the shape ${shapeName}.`)
     const doc = docParts.length ? `/**\n${docParts.map((p) => ` * ${p}`).join('\n')}\n */\n` : ''
 
+    // Always a string, because the runtime always hands the program text.
     const argsIsEmpty = argType === 'Record<string, unknown>' || argType === 'unknown'
     const sig = argsIsEmpty
-      ? `export function ${fn}(): Promise<${ret}>`
-      : `export function ${fn}(args: ${argType}): Promise<${ret}>`
+      ? `export function ${fn}(): Promise<string>`
+      : `export function ${fn}(args: ${argType}): Promise<string>`
 
-    const block = `${doc}${sig}\n`
+    // The function's own doc names this type, so the alias carries no comment.
+    const alias = shape ? `export type ${shapeName} = ${schemaToType(shape, 1, warnings)}\n` : ''
+
+    const block = `${alias}${doc}${sig}\n`
     perTool.push({ name: tool.name, bytes: encoder.encode(block).length })
     blocks.push(block)
   }
