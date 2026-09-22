@@ -1,7 +1,8 @@
 # The measured server table
 
-Six public MCP servers, measured on 2026-09-21 with `curl` and with
-`packages/mcp-client`. Nothing here was read off a README.
+Six public MCP servers, measured with `curl` and with `packages/mcp-client`.
+Transport and CORS were measured on 2026-09-21. Tool lists, definition sizes and
+payloads were measured again on 2026-09-22. Nothing here was read off a README.
 
 `packages/mcp-client/src/servers.ts` holds the same facts in code, and
 `node packages/cli/dist/bin.js servers` prints them.
@@ -72,47 +73,53 @@ and lists it here so nobody spends an afternoon finding out.
 
 ## Definition sizes
 
-The `tools/list` response body, measured with `curl` and `wc -c`.
+| server          | tools | `tools/list` body, 09-21 | tools array JSON, 09-22 | typed surface, 09-22 |
+| --------------- | ----: | -----------------------: | ----------------------: | -------------------: |
+| DeepWiki        |     3 |                  1,583 B |                 1,548 B |              1,124 B |
+| Context7        |     2 |                  4,927 B |                 4,874 B |              3,016 B |
+| Microsoft Learn |     3 |                  4,950 B |                 4,868 B |              3,110 B |
 
-| server          | tools | `tools/list` body | tools array JSON | typed surface |
-| --------------- | ----: | ----------------: | ---------------: | ------------: |
-| DeepWiki        |     3 |           1,583 B |          1,526 B |       1,157 B |
-| Context7        |     2 |           4,927 B |          4,874 B |       3,016 B |
-| Microsoft Learn |     3 |           4,950 B |          4,868 B |       2,806 B |
+The three columns are different things. The first is the response body measured
+with `curl` and `wc -c`, with the JSON-RPC envelope and the SSE frame. The second
+is what a client puts in a request. The third is the generated TypeScript a code
+mode model reads. See [methodology.md](methodology.md).
 
-The three columns are different things. The first includes the JSON-RPC envelope
-and the SSE frame. The second is what a client puts in a request. The third is
-the generated TypeScript a code mode model reads. See
-[methodology.md](methodology.md).
+DeepWiki's tools array was 1,526 B on 2026-09-21. On 2026-09-22 it renamed
+`ask_question` to `ask_wiki_question`, and the array grew by 22 bytes. The typed
+surface of Microsoft Learn grew between the two dates for a different reason: the
+surface now declares the JSON shape a result's text holds, instead of pretending
+the function returns that object.
 
-Total definition surface across the three keyless servers: 11,268 B of tools JSON,
-roughly 3,000 to 3,500 estimated tokens, about 1.5% of a 200K window.
+Total definition surface across the three keyless servers: 11,268 B of tools JSON
+on 2026-09-21 and 11,290 B on 2026-09-22, roughly 3,000 to 3,400 estimated tokens,
+about 1.5% of a 200K window.
 
 ## Payload sizes
 
-This is the column no other tool publishes.
+Measured 2026-09-21. The schema audits in [prior-art.md](prior-art.md) do not
+report this column.
 
 | server          | tool                           | probe arguments                                              | text returned |        est. tokens |
 | --------------- | ------------------------------ | ------------------------------------------------------------ | ------------: | -----------------: |
-| DeepWiki        | `read_wiki_contents`           | `{ repoName: 'cloudflare/agents' }`                          |      683.7 kB | 184,250 to 212,167 |
-| DeepWiki        | `read_wiki_structure`          | `{ repoName: 'cloudflare/agents' }`                          |        1.7 kB |         470 to 541 |
-| Microsoft Learn | `microsoft_docs_search`        | `{ query: 'durable functions orchestration patterns' }`      |       23.6 kB |     6,365 to 7,329 |
-| Microsoft Learn | `microsoft_code_sample_search` | `{ query: 'azure blob storage upload', language: 'python' }` |       10.3 kB |     2,777 to 3,198 |
-| Microsoft Learn | `microsoft_docs_fetch`         | a Durable Functions overview URL                             |        2.2 kB |         601 to 692 |
+| DeepWiki        | `read_wiki_contents`           | `{ repoName: 'cloudflare/agents' }`                          |     683.7 KiB | 184,250 to 212,167 |
+| DeepWiki        | `read_wiki_structure`          | `{ repoName: 'cloudflare/agents' }`                          |       1.7 KiB |         470 to 541 |
+| Microsoft Learn | `microsoft_docs_search`        | `{ query: 'durable functions orchestration patterns' }`      |      23.6 KiB |     6,365 to 7,329 |
+| Microsoft Learn | `microsoft_code_sample_search` | `{ query: 'azure blob storage upload', language: 'python' }` |      10.3 KiB |     2,777 to 3,198 |
+| Microsoft Learn | `microsoft_docs_fetch`         | a Durable Functions overview URL                             |       2.2 KiB |         601 to 692 |
 
-`ask_question` on DeepWiki is never probed automatically. It spends the
-provider's money, and `planProbes` refuses any tool whose name starts with a
-verb like `ask`, `generate` or `create`.
+DeepWiki's question tool, `ask_wiki_question` since 2026-09-22 and `ask_question`
+before, is never probed automatically. It spends the provider's money, and
+`planProbes` refuses any tool whose name starts with a verb like `ask`, `generate`
+or `create`.
 
-DeepWiki `read_wiki_contents` across seven repositories ranges from 274.4 kB to
-728.2 kB of text. The full table is in the README and in
-[methodology.md](methodology.md).
+DeepWiki `read_wiki_contents` across seven repositories ranges from 274.4 KiB to
+728.2 KiB of text. The full table is in [methodology.md](methodology.md).
 
 ## Why the arguments matter
 
 A scanner that calls every tool with a generic string reports a flattering
-number. Microsoft Learn returns 14 bytes for "getting started" and 23.6 kB for a
-real question. Same tool, same server, three orders of magnitude apart.
+number. Microsoft Learn returns 14 bytes for "getting started" and 24,187 bytes
+for a real question. Same tool, same server, three orders of magnitude apart.
 
 So `servers.ts` carries hand-written `probeHints` per tool. A probe is only as
 honest as its arguments, and this repo prints the arguments next to every
@@ -120,12 +127,14 @@ result so you can judge them.
 
 ## Apify
 
-Apify needs a bearer token. It never appears in the browser demo, because a
-token in a public page is a token you have given away. It runs in the CI arm
-only, with the token from the environment.
+Apify serves its full tool set only with a bearer token. Without one it answers
+only when `?tools=` pins a subset, and the daily liveness probe checks that pinned
+subset of four tools. The full set is measured locally, with the token read from
+the environment. A token never goes into a page, because a token in a public page
+is a token you have given away.
 
 Its own wiki, `apify/apify-mcp-server`, is the largest payload measured anywhere
-in this project: 728.2 kB of text from one DeepWiki call, 98% to 113% of a 200K
-window.
+in this project: 745,654 bytes (728.2 KiB) of text from one DeepWiki call, 98% to
+113% of a 200K window.
 
 An unauthenticated `tools/list` POST to `https://mcp.apify.com` returns `401`.

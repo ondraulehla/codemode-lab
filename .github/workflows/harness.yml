@@ -1,28 +1,20 @@
 name: harness
 
-# The token harness. NOT WIRED UP YET, on purpose.
+# The token harness does not run in CI. It runs locally, and harness/README.md says
+# why: the Agent SDK pulls a platform binary of about 218 MB, the credential is
+# personal and expires, forks get no secrets, and cache TTL depends on a billing
+# state CI cannot see. The first local sweep ran on 2026-09-21 and its billed
+# counts are in results/.
 #
-# What it will do: run each task through a model both ways, direct tool calling and
-# code mode, and read the billed input and output tokens off the API response. Every
-# token figure in this repo today is an estimate from byte counts at 3.3 to 3.8 bytes
-# per token. The harness is what replaces those estimates with numbers somebody
-# billed, and until it runs, no page in this repo may print a token count without
-# the word estimate next to it.
-#
-# THE OPEN DECISION, which is why the step below fails instead of running:
-# the harness needs Anthropic API access, and the author wants to run it against his
-# Claude subscription rather than buy pay as you go credits. Whether that is possible,
-# and under which terms, is still being researched. Inventing an auth mechanism now
-# would mean writing code against a guess, and a guess in the one workflow that
-# produces the repo's authoritative numbers is worse than no workflow at all.
-#
-# When the decision lands, three things change here and nowhere else:
+# This workflow stays as a manual placeholder that fails on purpose, so nobody can
+# read a green tick here as "CI produced the billed numbers". If the harness ever
+# moves to CI, three things change here and nowhere else:
 #   1. the credential arrives as a repository secret, read only by this workflow
-#   2. the failing step becomes the harness run
-#   3. the run writes results/<run-id>.json and results/README.md explains the shape
+#   2. the failing step becomes `node harness/run.mjs` and `node harness/summarize.mjs`
+#   3. the run uploads results/ as an artifact for a human to read and commit
 #
 # Manual only. It is never on a schedule, and never on a pull request, because it
-# is the only workflow in this repo that can cost money.
+# is the only workflow in this repo that could cost money.
 on:
   workflow_dispatch:
     inputs:
@@ -63,14 +55,10 @@ jobs:
       # so nobody can read a green tick as "the billed numbers are in".
       - name: run the harness
         run: |
-          echo "The token harness is not implemented yet."
+          echo "The token harness runs locally, not in CI. See harness/README.md."
           echo ""
-          echo "It is blocked on one open decision: how it authenticates to the"
-          echo "Anthropic API. The author intends to run it on a Claude subscription"
-          echo "rather than on pay as you go credits, and that question is still open."
-          echo ""
-          echo "Until it is answered, every token figure in this repo is an estimate"
-          echo "from byte counts, and every place that prints one says so."
+          echo "Billed counts come from a local sweep and are committed by a human"
+          echo "after reading them: results/sweep-<run-id>.json and its summary."
           echo ""
           echo "Requested task: ${{ inputs.task }}"
           exit 1

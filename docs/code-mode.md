@@ -31,10 +31,11 @@ mode mixes them:
 
 - **The definition saving.** A typed surface is smaller than raw JSON Schema,
   and a surface can be loaded on demand instead of all at once. Measured in this
-  repo: 24% smaller on DeepWiki, 42% smaller on Microsoft Learn. Small numbers
-  on small numbers.
+  repo on 2026-09-22: 27% smaller on DeepWiki, 36% smaller on Microsoft Learn.
+  Small numbers on small numbers.
 - **The payload saving.** A result the program filters never enters context.
-  Measured in this repo: 1.70 MB in, 603 B out on `cross-repo-scan`.
+  Measured in this repo on 2026-09-22: 1,393,773 bytes (1.33 MiB) in, 371 bytes
+  out on `table-heavy-page`.
 
 The first is what the famous percentages measure. The second is what decides
 whether a task runs.
@@ -50,9 +51,15 @@ everyone repeats: token usage falling from 150,000 to 2,000, a saving of 98.7%.
 The post walks through a Google Drive to Salesforce scenario and computes what
 the two approaches would cost. No benchmark, no harness, no runs.
 
-The post is a good design document. The 98.7% is arithmetic on an illustration.
-Anyone quoting it as a measured result is quoting something the post does not
-say.
+The post is a good design document. The 98.7% is arithmetic on an illustration,
+and the sentence around it is about loading only the tool definitions a task
+needs. Anyone quoting it as a measured result is quoting something the post does
+not say.
+
+The post does name the payload term too. It describes a meeting transcript that
+passes through the context twice, about 50,000 extra tokens for a two hour
+meeting, and says a larger document can break the workflow. It describes that
+term. It does not measure it.
 
 Simon Willison covered it the same day, on 4 November 2025:
 [simonwillison.net/2025/Nov/4/code-execution-with-mcp/](https://simonwillison.net/2025/Nov/4/code-execution-with-mcp/).
@@ -74,12 +81,19 @@ replaces all of them with two general tools, `search()` and `execute()`, which
 costs about 1,000 tokens. 1,000 against 1.17 million is the 99.9%.
 
 **That is a measurement of a tool definition blob, not of tokens consumed by a
-task.** It is a real and useful number: it says a 2,500-endpoint API cannot be
+task.** The post counted it with tiktoken, which is an OpenAI tokenizer, not
+Claude's. It is a real and useful number: it says a 2,500-endpoint API cannot be
 exposed as 2,500 tool definitions, which is true and important. It says nothing
 about what happens when `execute()` returns a large response.
 
-So both famous percentages describe the definition term. Neither describes the
+So both famous percentages describe the definition term. Neither measures the
 payload term.
+
+The first Cloudflare post,
+[Code Mode: the better way to use MCP](https://blog.cloudflare.com/code-mode/)
+(26 September 2025), gives no numbers at all. Its argument is that models have seen
+far more real code than tool calls, and that chained calls stop copying each output
+through the model.
 
 ## Anthropic: Programmatic tool calling
 
@@ -98,16 +112,17 @@ Measurements it reports from internal evaluations:
 | BrowseComp and DeepSearchQA, with search tools                            | about 11% better performance, 24% fewer input tokens            |
 
 The τ² row is the one to remember. Each turn in that benchmark makes one or two
-sequential tool calls. The page states plainly that sequential single-call
-workflows do not benefit.
+sequential tool calls. The page states plainly that workflows of one sequential
+call at a time do not benefit.
 
 The page also lists the shapes where it does not pay: strictly sequential
 workflows where each call depends on the model reasoning over the previous
 result, a small number of calls with small responses, and tools that need user
 feedback between calls.
 
-This repo's `single-call` and `sequential-pair` tasks exist to reproduce that
-shape on public servers, and they do. See the README.
+This repo's `outline-leaves` and `structure-rank` tasks have that shape: a few
+small results. Both were predicted to lose. See the README for how they came out,
+and for why one run cannot settle it.
 
 ## Bifrost: the published per-query dataset
 
@@ -118,11 +133,15 @@ per-query table instead of the headline only.
 
 Headline results, code mode off against code mode on:
 
-| round | tools | input token reduction |
-| ----- | ----: | --------------------: |
-| 1     |    96 |                 57.7% |
-| 2     |   251 |                 84.3% |
-| 3     |   508 |                 92.7% |
+| round | tools | total token reduction | input token reduction |
+| ----- | ----: | --------------------: | --------------------: |
+| 1     |    96 |                 57.7% |                 58.2% |
+| 2     |   251 |                 84.3% |                 84.5% |
+| 3     |   508 |                 92.7% |                 92.8% |
+
+The headline percentages are total tokens. An earlier version of this page called
+them input reductions. The report ran one model, Claude Sonnet 4.6, and one run per
+query.
 
 Read the per-query table and a different picture appears. Round 2, query H6:
 
@@ -147,13 +166,24 @@ result is big and the program does not shrink it before returning. This is
 exactly the failure mode this repo is built to surface, and Bifrost deserves
 credit for publishing the row instead of trimming it.
 
+## Measured since
+
+Several people have measured code mode on real tasks since these sources were
+written, and some of them found losses. The summary is in
+[prior-art.md](prior-art.md). The short version: a large code mode saving is usually
+a definition saving; code mode costs output tokens and latency; it loses when the
+task is small; and a strong direct arm with a CLI or file tools is much harder to
+beat than a bare one.
+
 ## What this repository adds
 
-Nothing above measures what a single public MCP tool call returns.
+None of the code mode sources above measures what a single public MCP tool call
+returns, as its own term.
 
 This repo does, on live servers, with the commands in the box. One DeepWiki
-`read_wiki_contents` call returns 683.7 kB of text, which is 92% to 106% of a
-200K window and 459 times the whole definition surface of that server.
+`read_wiki_contents` call returned 700,150 bytes (683.7 KiB) of text on
+2026-09-21, which is 92% to 106% of a 200K window and 459 times the whole
+definition surface of that server.
 
 Against that term, a 24% smaller schema file is noise, and a 98.7% saving on an
 illustrated task is not a number you can plan with.

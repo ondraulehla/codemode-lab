@@ -71,6 +71,28 @@ while writing the program costs more than that in output. When the absolute numb
 are small the ratio is a red herring. This is the trap in every volume comparison,
 including the published ones.
 
+## Arms added later, and their predictions
+
+The two large tasks name two more arms in `extraArms`: `A-files`, a direct arm that
+can Read and Grep the file Claude Code writes an oversized result to, and `A-raw`, a
+direct arm whose output limit is raised so the result lands in the window. They were
+added on 2026-09-22, after the first sweep showed that the direct arm never saw the
+data on those tasks.
+
+Adding an arm after a run is where a benchmark starts to bend towards its answer.
+So each added arm comes with a prediction in `predictions`, dated, and written
+before the arm first ran. A test fails the build if an added arm has no prediction.
+
+## Every program type-checks against the surface
+
+A typegen test compiles every reference program against the typed surface a model
+would read for its task. The programs are the ground truth for what the sandbox
+hands over. On 2026-09-22 this check caught two things: the surface promised
+DeepWiki returns `{ result: string }` when the program gets a string, and
+`table-heavy-page` read a field of a value that is null when a dump has no page
+markers. Both programs now fail loudly on such a dump instead of returning a null
+that would read as an answer.
+
 ## Programs live in files
 
 Never paste a program into a template literal. A `\b` inside one is a backspace
