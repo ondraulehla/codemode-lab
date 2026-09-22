@@ -48,7 +48,7 @@ export const GUEST_SOURCE = String.raw`
   }
 
   // Console inside the sandbox is a channel to the host, not the real console.
-  // The demo shows these lines next to the program, so a reader can watch it think.
+  // A page can show these lines next to the program, so a reader can watch it think.
   var sandboxConsole = {
     log: function () { send({ kind: 'log', level: 'log', text: fmt(arguments) }) },
     warn: function () { send({ kind: 'log', level: 'warn', text: fmt(arguments) }) },

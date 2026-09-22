@@ -3,7 +3,7 @@
  *
  * Both sandboxes in this package (an iframe in the browser, a worker in Node)
  * speak exactly this. Keeping it in one file means the byte accounting is
- * identical in the demo and in the CLI, so a number measured in one can be
+ * identical in a page and in the CLI, so a number measured in one can be
  * compared against a number measured in the other.
  *
  * Direction is always named from the host's point of view.
@@ -81,7 +81,7 @@ export interface RunResult {
   /**
    * Why the run ended, when it did not end well.
    *
-   * Naming the class beats printing a stack trace: a demo that fails visibly and
+   * Naming the class beats printing a stack trace: a page that fails visibly and
    * says which kind of failure it was is more credible than one that never fails.
    */
   failure?: FailureClass

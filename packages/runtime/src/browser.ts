@@ -6,8 +6,9 @@ import type { RunResult } from './protocol.js'
 /**
  * Run a program in an opaque-origin iframe.
  *
- * This is the sandbox the public demo uses, and it is the strong one. Two
- * independent controls hold it:
+ * This is the sandbox for a page, and it is the strong one. The project page used
+ * it until 2026-09-21, and now replays a recording instead. Two independent
+ * controls hold it:
  *
  *  1. `sandbox="allow-scripts"` WITHOUT `allow-same-origin`. The frame gets an
  *     opaque origin, so it cannot touch the page's DOM, storage or cookies, and

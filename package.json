@@ -4,8 +4,7 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "harness",
-    "site"
+    "harness"
   ],
   "engines": {
     "node": ">=20"
