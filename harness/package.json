@@ -14,6 +14,6 @@
     "@codemode-lab/meter": "0.1.0",
     "@codemode-lab/runtime": "0.1.0",
     "@codemode-lab/typegen": "0.1.0",
-    "zod": "^4.0.0"
+    "zod": "^4.6.7"
   }
 }
